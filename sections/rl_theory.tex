@@ -1,0 +1,58 @@
+\section{Distribution Drift of RL Target}
+
+While the entropy collapse is widely observed in RL scenarios, previous experiments could provide certain evidence that the variance accumulation is one of the major causes of this phenomena in RL. Another important side evidence of the variance impact in RL is the advantage estimation methods adopted in PPO~\citep{schulman_proximal_2017}, GRPO~\citep{shao_deepseekmath_2024}, or RLOO~\citep{ahmadian_back_2024}. These methods can significantly lower down the variance of the estimator in RL algorithms while maintaining the expectation form objective. This can notably increase the stability of LLM training, while our deduction further indicates that they are can also prevent potential entropy collapse of the target distribution. It remains open if we could find better methods in controling the estimattion variance.
+
+% TODO Ablation experiments on advantage estimation methods.
+
+% TODO Variance experiments on Imagenet
+
+self-distillation training and RL share some properties such as variance accumulation since they are both iterative learning algorithms, while RL still exhibit some other unique behavior which we can work on. In this section we will primarily study the property of RL with binary reward.
+
+A key distinction is that RL can have a nonzero mean gradient because its success-conditioned target differs from the current policy. When failures have at least as much conditional entropy as successes, this target has strictly lower entropy than the policy. This condition is reasonable since we typically have more ways to obtain a flawed answer than a correct one.
+
+\begin{lemma}[Lower entropy of the success-conditioned target]
+\label{lem:rl-target-entropy}
+For a prompt $x$ with $0<\rho_\theta(x)<1$, let $\pi_\theta^-$ denote the failure-conditioned distribution. If
+$H(\pi_\theta^-(\cdot\mid x))\ge H(\pi_\theta^+(\cdot\mid x))$, then
+\begin{equation}
+ H(\pi_\theta^+(\cdot\mid x))<H(\pi_\theta(\cdot\mid x)).
+ \label{eq:rl-target-entropy}
+\end{equation}
+\end{lemma}
+\noindent\hyperref[app:rl-target-entropy]{Proof: Appendix~\ref*{app:rl-target-entropy}.}
+
+This gives another cause on the entropy decrement in RL, which does not seem harmful. One important reason why we are concerning the entropy collapse in RL is that, this usually indicates collapse in diversity and the potential performance gains. We contend that this degeneration is primarily caused by the drift of the target distribution, instead of the general entropy decrement. This distribution drift could come from the variance accumulation discussed in \hyperref[sec:variance-accumulation]{Section~\ref*{sec:variance-accumulation}}, and in RL there is another first-order term introduced by nonzero mean gradient.
+
+We characterize this term for one SGD update of a frozen-feature softmax readout at a fixed prefix $s$. Write $p_i=\pi_{W_0}(i\mid s)$ and $\varepsilon=\eta\|\phi(s)\|_2^2$. For a token subset $\mathcal S$ with equal expected advantage $A_i=a>0$, let $P_{\mathcal S}=\sum_{i\in\mathcal S}p_i$ and $q_i=p_i/P_{\mathcal S}$. With deterministic binary token rewards, $\mathcal S$ can be the success set, so $q$ is the success-conditioned target and $a=1-P_{\mathcal S}$.
+
+\begin{lemma}[First-order concentration under REINFORCE]
+\label{lem:rl-conditional-drift}
+Under this setup, a REINFORCE update gives
+\begin{equation}
+ \mathbb E[\Delta q_i]
+ =\varepsilon aP_{\mathcal S}q_i(q_i-M_2)+O(\varepsilon^2),
+ \qquad M_2=\sum_{j\in\mathcal S}q_j^2.
+ \label{eq:rl-conditional-drift}
+\end{equation}
+Tokens with $q_i>M_2$ gain conditional probability at first order. The first-order change in $H(q)$ is strictly negative unless $q$ is uniform, despite all tokens in $\mathcal S$ having equal expected advantage.
+\end{lemma}
+\noindent\hyperref[app:dynamics-reinforce]{Proof: Appendix~\ref*{app:dynamics-reinforce}, Lemma~\ref*{lem:dyn-reinforce}.}
+
+Related difficulties arise in classical RL, where policies can stall near suboptimal solutions. Log-barrier regularization helps maintain updates to low-probability actions and hence preserves the diversity~\citep{agarwal_theory_2020}. Under the same readout model, adding an inverse-probability correction with a constant signal cancels the first-order drift within $\mathcal S$.
+
+\begin{lemma}[First-order drift cancellation under normed-ls]
+\label{lem:rl-drift-cancellation}
+Under the same setup, adding the detached correction $a/(Vp_Y)$ to the sampled advantage in the REINFORCE loss gives normed-ls, where $V$ is the vocabulary size. This cancels the first-order expected drift of both the conditional distribution and its entropy:
+\begin{equation}
+ \mathbb E[\Delta q_i]=O(\varepsilon^2),
+ \qquad \mathbb E[\Delta H(q)]=O(\varepsilon^2).
+ \label{eq:rl-drift-cancellation}
+\end{equation}
+\end{lemma}
+\noindent\hyperref[app:dynamics-normed-ls]{Proof: Appendix~\ref*{app:dynamics-normed-ls}, Lemma~\ref*{lem:dyn-normed-ls}.}
+
+Note that this cancellation concerns the first-order mean drift; finite-step sampling noise can still change the conditional distribution and its entropy. The strict cancellation requires accurate estimation of per-token advantage, which is generally inaccessible in practice. So in the following experiments we used a simplified version of normed-ls method, using a constant to replace the advantage weight in the theoretical implementation. It already exhibits certain advantage over GRPO and MaxRL in experiments, while its performance equipped with a value model remains to be explored.
+
+% TODO Experiments of normed-ls
+
+

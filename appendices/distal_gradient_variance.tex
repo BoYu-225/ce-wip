@@ -1,0 +1,90 @@
+\section{A Conditional Variance Comparison in the Distal Regime}
+\label{app:distal-gradient-variance}
+
+Fix a prompt $x$, a finite response space $\mathcal Y_x$, and a student
+parameter $\bar\theta$. Assume $\pi_\theta$ is positive and continuously
+differentiable near $\bar\theta$, and write
+$p_y=\pi_{\bar\theta}(y\mid x)$ and
+$s_y=\nabla_\theta\log\pi_\theta(y\mid x)|_{\bar\theta}$.
+Let $\mathcal A$ be a nonempty proper subset of $\mathcal Y_x$, with
+$a=\sum_{y\in\mathcal A}p_y\in(0,1)$. For fixed positive distributions
+$u$ on $\mathcal A$ and $v$ on its complement, consider teachers
+\begin{equation}
+ \pi_{t,\epsilon}(y\mid x)=
+ \begin{cases}
+   \epsilon u_y,&y\in\mathcal A,\\
+   (1-\epsilon)v_y,&y\notin\mathcal A,
+ \end{cases}
+ \qquad 0<\epsilon<1.
+ \label{eq:distal-teacher-family}
+\end{equation}
+Each teacher is independent of $\theta$. Use the estimators in
+\eqref{eq:proximal-kd-estimator}--\ref{eq:proximal-opd-estimator}, evaluated
+at $\bar\theta$ with teacher $\pi_{t,\epsilon}$ and $m$ independent
+responses each. Denote their total variances by
+$V_{\mathrm{KD}}(\epsilon)=\operatorname{Tr}\operatorname{Cov}
+(\widehat g_{\mathrm{KD}})$ and
+$V_{\mathrm{OPD}}(\epsilon)=\operatorname{Tr}\operatorname{Cov}
+(\widehat g_{\mathrm{OPD}})$.
+
+\begin{lemma}[Variance amplification under teacher-probability suppression]
+\label{lem:distal-gradient-variance}
+If $\sum_{y\in\mathcal A}p_y\|s_y\|_2^2>0$, then, as $\epsilon\to0$,
+\begin{equation}
+ V_{\mathrm{OPD}}(\epsilon)
+ =\frac{C_{\mathcal A}}m\log^2\frac1\epsilon
+       +O\!\left(\frac{\log(1/\epsilon)}m\right),
+ \qquad V_{\mathrm{KD}}(\epsilon)\le\frac{G^2}{m},
+ \label{eq:distal-variance-growth}
+\end{equation}
+where $G=\max_y\|s_y\|_2$ and
+\begin{equation}
+ C_{\mathcal A}
+ =\sum_{y\in\mathcal A}p_y\|s_y\|_2^2
+       -\left\|\sum_{y\in\mathcal A}p_ys_y\right\|_2^2>0.
+ \label{eq:distal-variance-coefficient}
+\end{equation}
+Consequently, for every fixed $R>0$, sufficiently small $\epsilon$
+gives $V_{\mathrm{OPD}}(\epsilon)>R V_{\mathrm{KD}}(\epsilon)$.
+\end{lemma}
+
+\begin{proof}
+Set $L=\log(1/\epsilon)$. The OPD weight
+$w_\epsilon(y)=\log[\pi_{t,\epsilon}(y\mid x)/p_y]$ decomposes as
+\begin{equation}
+ w_\epsilon(y)=-L\mathbf1_{\mathcal A}(y)+b_\epsilon(y),
+ \qquad
+ b_\epsilon(y)=
+ \begin{cases}
+   \log(u_y/p_y),&y\in\mathcal A,\\
+   \log(v_y/p_y)+\log(1-\epsilon),&y\notin\mathcal A.
+ \end{cases}
+ \label{eq:distal-weight-decomposition}
+\end{equation}
+For $0<\epsilon\le1/2$, $b_\epsilon$ and $s$ are uniformly bounded.
+Thus, for $Y\sim p$, expanding the variance of
+$w_\epsilon(Y)s_Y=-L\mathbf1_{\mathcal A}(Y)s_Y+b_\epsilon(Y)s_Y$
+and averaging $m$ independent samples gives
+\begin{equation}
+ mV_{\mathrm{OPD}}(\epsilon)
+ =L^2\operatorname{Tr}\operatorname{Cov}_p
+       (\mathbf1_{\mathcal A}(Y)s_Y)+O(L)
+ =L^2 C_{\mathcal A}+O(L).
+ \label{eq:distal-variance-expansion}
+\end{equation}
+Cauchy--Schwarz yields
+$C_{\mathcal A}\ge(1-a)\sum_{y\in\mathcal A}p_y\|s_y\|_2^2>0$.
+For KD,
+$mV_{\mathrm{KD}}(\epsilon)
+\le\mathbb E_{\pi_{t,\epsilon}}\|s_Y\|_2^2\le G^2$,
+proving the claim. This is a distal family because
+$D_{\mathrm{KL}}(p\Vert\pi_{t,\epsilon})=aL+O(1)\to\infty$.
+\end{proof}
+
+The result fixes the student and suppresses teacher probability on a set
+with nonvanishing student mass and score contribution. It does not assert
+the same behavior for every high-KL pair or along every training trajectory
+with a fixed teacher. The comparison concerns the unmodified log-ratio OPD
+estimator and sampled-response KD; baselines, clipping, and full-vocabulary
+estimators require separate analysis. It bounds absolute gradient-estimation
+variance, without establishing training instability.

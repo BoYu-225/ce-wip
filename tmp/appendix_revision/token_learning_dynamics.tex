@@ -1,0 +1,421 @@
+\section{Expected One-Step Dynamics of Token-Level Policy Optimization}
+\label{app:token-learning-dynamics}
+\numberwithin{equation}{section}
+
+We analyze REINFORCE, logit-shift, and normed-ls under the frozen-feature
+linear-readout model used in Appendix~E of \citet{ren2025learningdynamics}.
+The analysis first gives exact expected logit updates and then derives their
+first-order effects on the conditional distribution of an equal-advantage
+subset. All expectations in this section condition on the current policy and
+the input prefix, unless stated otherwise.
+
+\subsection{Setup and a common update identity}
+\label{app:dynamics-setup}
+
+Fix a prefix $s=(x,y_{<t})$ and a vocabulary $\mathcal V=\{1,\ldots,V\}$,
+where $V\ge 2$. The feature $\phi=\phi(s)\in\mathbb R^d$ is fixed, and
+only the readout matrix $W\in\mathbb R^{d\times V}$ is updated. At the
+current parameter $W_0$, define
+\begin{equation}
+ z=W_0^\top\phi,\qquad
+ p_i=\pi_{W_0}(i\mid s)=\frac{\exp(z_i)}{\sum_{j=1}^V\exp(z_j)},
+ \qquad \varepsilon=\eta\|\phi\|_2^2,
+ \label{eq:dyn-model}
+\end{equation}
+where $\eta>0$ is the SGD learning rate and $\|\phi\|_2>0$.
+Finite logits imply $p_i>0$ for every $i$. Sampling uses this same
+distribution, without top-$k$ or nucleus truncation.
+
+Let $Y\sim p$ be the next token. In scenarios like RLVR, the reward $r$ is given at the sequence level, which also depend on the
+continuation generated after $Y$. We define
+\begin{equation}
+ Q_i=\mathbb E[r\mid s,Y=i],\qquad
+ v=\sum_{j=1}^V p_jQ_j,\qquad
+ A_i=Q_i-v,\qquad \sum_{i=1}^V p_iA_i=0.
+ \label{eq:dyn-advantage}
+\end{equation}
+The sampled signal $\widehat A$ satisfies
+$\mathbb E[\widehat A\mid s,Y=i]=A_i$; for example,
+$\widehat A=A-v$. We assume $\widehat A$ is bounded. Neither this signal
+nor the sampling probabilities are differentiated in a policy update.
+The quantities $Q_i$ and $v$ describe the current policy, including its
+continuation distribution; they are not differentiated through the sampled
+surrogate loss.
+
+For a detached scalar coefficient $c=c(Y,\widehat A)$, consider the
+sample loss
+\begin{equation}
+ \ell_c(W)=-\operatorname{sg}[c]\log\pi_W(Y\mid s),
+ \qquad W^+=W_0-\eta\nabla_W\ell_c(W_0),
+ \label{eq:dyn-generic-loss}
+\end{equation}
+where $\operatorname{sg}$ denotes stop-gradient. With $e_Y$ the $Y$-th
+standard basis vector,
+\begin{align}
+ \nabla_W\log\pi_W(Y\mid s)\big|_{W_0}
+ &=\phi(e_Y-p)^\top, \nonumber\\
+ W^+&=W_0+\eta c\phi(e_Y-p)^\top, \nonumber\\
+ \Delta z&\equiv (W^+)^\top\phi-z
+       =\varepsilon c(e_Y-p).
+ \label{eq:dyn-generic-update}
+\end{align}
+Consequently, if $m_i=\mathbb E[c\mid Y=i]$ and
+$\bar m=\sum_jp_jm_j$, then
+\begin{equation}
+ \mathbb E[\Delta z_i]=\varepsilon p_i(m_i-\bar m).
+ \label{eq:dyn-generic-mean}
+\end{equation}
+This identity is exact for one update of the stated readout model.
+It also holds for the mean of a fixed number of independent samples at the
+same prefix, with the corresponding averaged gradient.
+
+\paragraph{From logits to conditional probabilities.}
+Let $\mathcal S\subseteq\mathcal V$ be a fixed nonempty subset, and write
+\begin{equation}
+ P_{\mathcal S}=\sum_{i\in\mathcal S}p_i,\qquad
+ q_i=\frac{p_i}{P_{\mathcal S}}\quad(i\in\mathcal S),\qquad
+ M_2=\sum_{i\in\mathcal S}q_i^2,\qquad
+ H(q)=-\sum_{i\in\mathcal S}q_i\log q_i.
+ \label{eq:dyn-conditional}
+\end{equation}
+The set $\mathcal S$ is held fixed during the update, and $q^+$ denotes
+the updated policy conditioned on that same set. Since $q$ is the softmax
+restricted to $\mathcal S$, writing $\mathbb E[\Delta z]=\varepsilon u$
+gives
+\begin{align}
+ \mathbb E[\Delta q_i]
+ &=\varepsilon q_i\left(u_i-\sum_{j\in\mathcal S}q_ju_j\right)
+     +O(\varepsilon^2),
+ \label{eq:dyn-conditional-drift}\\
+ \mathbb E[\Delta H(q)]
+ &=-\varepsilon\operatorname{Cov}_{I\sim q}(u_I,\log q_I)
+     +O(\varepsilon^2).
+ \label{eq:dyn-entropy-drift}
+\end{align}
+The first identity follows from
+$\partial q_i/\partial z_j=q_i(\mathbf 1_{\{i=j\}}-q_j)$ for
+$i,j\in\mathcal S$, with zero derivatives for $j\notin\mathcal S$.
+For the second, use $\partial H/\partial q_i=-(1+\log q_i)$ and
+$\sum_i\Delta q_i=0$. The remainders are conditional, local in the
+current policy, and need not be uniform as $\min_i p_i\to0$.
+Bounded signals and finite positive $p_i$ justify taking expectations of
+these Taylor expansions. In contrast, the pairwise identity
+\begin{equation}
+ \mathbb E\left[\Delta\log\frac{q_i}{q_j}\right]
+ =\mathbb E[\Delta z_i-\Delta z_j]
+ \quad (i,j\in\mathcal S)
+ \label{eq:dyn-exact-odds}
+\end{equation}
+is exact, because softmax normalization cancels in a probability ratio.
+
+\subsection{REINFORCE}
+\label{app:dynamics-reinforce}
+
+The single-token REINFORCE surrogate \citep{williams1992reinforce} is
+\begin{equation}
+ \ell_{\mathrm{RF}}(W;Y,\widehat A)
+ =-\operatorname{sg}[\widehat A]\log\pi_W(Y\mid s).
+ \label{eq:dyn-rf-loss}
+\end{equation}
+
+\begin{lemma}[Expected logit update under REINFORCE]
+\label{lem:dyn-reinforce}
+Under the setup above, one SGD update with
+\eqref{eq:dyn-rf-loss} satisfies
+\begin{equation}
+ \mathbb E[\Delta z_i^{\mathrm{RF}}]
+ =\varepsilon p_iA_i,\qquad i\in\mathcal V.
+ \label{eq:dyn-rf-mean}
+\end{equation}
+If $A_i=a>0$ for all $i\in\mathcal S$, then
+\begin{align}
+ \mathbb E[\Delta q_i^{\mathrm{RF}}]
+ &=\varepsilon aP_{\mathcal S}q_i(q_i-M_2)+O(\varepsilon^2),
+ \label{eq:dyn-rf-q}\\
+ \mathbb E[\Delta H(q)^{\mathrm{RF}}]
+ &=-\varepsilon aP_{\mathcal S}\mathcal C(q)+O(\varepsilon^2),
+ \label{eq:dyn-rf-h}
+\end{align}
+where $\mathcal C(q)=\operatorname{Cov}_{I\sim q}(q_I,\log q_I)\ge0$.
+\end{lemma}
+
+\begin{proof}
+Substitution of $c=\widehat A$ into
+\eqref{eq:dyn-generic-update}, followed by conditioning on $Y$, gives
+\begin{align*}
+ \mathbb E[\Delta z_i^{\mathrm{RF}}]
+ &=\varepsilon\sum_{y=1}^V p_yA_y
+                 (\mathbf 1_{\{i=y\}}-p_i)\\
+ &=\varepsilon\left(p_iA_i-p_i\sum_{y=1}^V p_yA_y\right)
+ =\varepsilon p_iA_i.
+\end{align*}
+On $\mathcal S$, we therefore have
+$u_i=ap_i=aP_{\mathcal S}q_i$. Substituting this expression into
+\eqref{eq:dyn-conditional-drift} and \eqref{eq:dyn-entropy-drift}
+proves the two first-order identities. Finally,
+\begin{equation}
+ \mathcal C(q)=\frac12\sum_{i,j\in\mathcal S}
+ q_iq_j(q_i-q_j)(\log q_i-\log q_j)\ge0,
+ \label{eq:dyn-covariance-sign}
+\end{equation}
+since the logarithm is increasing. With strictly positive $q_i$, equality
+holds exactly when $q$ is uniform on $\mathcal S$.
+\end{proof}
+
+The sign in \eqref{eq:dyn-rf-h} concerns the first-order drift. It yields
+$\dot H=-aP_{\mathcal S}\mathcal C(q)$ along the corresponding local
+mean gradient flow; it does not assert monotonicity of the expected entropy
+for an arbitrary finite SGD step.
+
+\subsection{Logit-shift}
+\label{app:dynamics-logit-shift}
+
+For any bounded, detached sampled signal $\widehat B$, define the logit-shift
+surrogate by inverse-probability weighting:
+\begin{equation}
+ \ell_{\mathrm{LS}}(W;Y,\widehat B)
+ =-\operatorname{sg}\left[\frac{\widehat B}{p_Y}\right]
+                  \log\pi_W(Y\mid s).
+ \label{eq:dyn-ls-loss}
+\end{equation}
+Here $p_Y=\pi_{W_0}(Y\mid s)$ is the sampling probability. The algorithm
+using $A/p$ is the special case $\widehat B=\widehat A$. Stating the
+identity for a general signal also specifies the constant-signal branch
+used by normed-ls below.
+
+\begin{lemma}[Expected logit update under logit-shift]
+\label{lem:dyn-logit-shift}
+Let $B_i=\mathbb E[\widehat B\mid Y=i]$ and
+$T_B=\sum_{j=1}^V B_j$. One SGD update with
+\eqref{eq:dyn-ls-loss} satisfies
+\begin{equation}
+ \mathbb E[\Delta z_i^{\mathrm{LS}}]
+ =\varepsilon(B_i-p_iT_B).
+ \label{eq:dyn-ls-mean}
+\end{equation}
+In particular, for $\widehat B=\widehat A$, let
+$T_A=\sum_jA_j$. If $A_i=a>0$ on $\mathcal S$, then
+\begin{align}
+ \mathbb E[\Delta q_i^{\mathrm{LS}}]
+ &=-\varepsilon T_AP_{\mathcal S}q_i(q_i-M_2)+O(\varepsilon^2),
+ \label{eq:dyn-ls-q}\\
+ \mathbb E[\Delta H(q)^{\mathrm{LS}}]
+ &=\varepsilon T_AP_{\mathcal S}\mathcal C(q)+O(\varepsilon^2).
+ \label{eq:dyn-ls-h}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+Applying \eqref{eq:dyn-generic-update} with
+$c=\widehat B/p_Y$ gives
+\begin{align*}
+ \mathbb E[\Delta z_i^{\mathrm{LS}}]
+ &=\varepsilon\sum_{y=1}^V p_y\frac{B_y}{p_y}
+                   (\mathbf 1_{\{i=y\}}-p_i)\\
+ &=\varepsilon\left(B_i-p_i\sum_{y=1}^V B_y\right).
+\end{align*}
+For $\widehat B=\widehat A$ and $i\in\mathcal S$, the normalized
+mean logit update is $u_i=a-T_AP_{\mathcal S}q_i$. Its constant part
+cancels in \eqref{eq:dyn-conditional-drift} and in the covariance in
+\eqref{eq:dyn-entropy-drift}, proving the remaining identities.
+\end{proof}
+
+The advantage identity $\sum_jp_jA_j=0$ does not imply $T_A=0$.
+Thus, inverse-probability weighting removes the factor $p_i$ from the
+coordinate-wise signal but leaves the term $-p_iT_A$ induced by softmax
+normalization. Its conditional entropy drift has the sign of $T_A$.
+For example, with deterministic binary token rewards, a success set of
+size $K$ and total probability $P$, one has $T_A=K-VP$.
+For the constant signal $\widehat B\equiv1$, the same lemma gives
+\begin{equation}
+ \mathbb E[\Delta z_i^{\mathrm{LS}(1)}]
+ =\varepsilon(1-Vp_i).
+ \label{eq:dyn-ls-constant}
+\end{equation}
+
+\subsection{Normed-ls and cancellation of the within-subset drift}
+\label{app:dynamics-normed-ls}
+
+Let $\lambda\ge0$ be fixed during the update. We define normed-ls by
+the sampled surrogate
+\begin{align}
+ \ell_{\mathrm{NLS}}(W;Y,\widehat A,\lambda)
+ &=\ell_{\mathrm{RF}}(W;Y,\widehat A)
+       +\frac{\lambda}{V}\ell_{\mathrm{LS}}(W;Y,1) \nonumber\\
+ &=-\operatorname{sg}\left[\widehat A+\frac{\lambda}{Vp_Y}\right]
+                  \log\pi_W(Y\mid s).
+ \label{eq:dyn-nls-loss}
+\end{align}
+In expectation, the second term is a uniform-to-policy KL penalty,
+up to a constant:
+\begin{equation}
+ \mathbb E_{Y\sim p}\left[
+       -\frac{\lambda}{Vp_Y}\log\pi_W(Y\mid s)\right]
+ =-\frac{\lambda}{V}\sum_j\log\pi_W(j\mid s)
+ =\lambda\,D_{\mathrm{KL}}(U_V\Vert\pi_W)+\lambda\log V,
+ \label{eq:dyn-barrier-identity}
+\end{equation}
+where $U_V$ is uniform over the vocabulary. This regularizer is the
+uniform-to-policy KL, rather than the Shannon entropy bonus
+\citep{agarwal2021policygradient}.
+
+The loss is also a weighted average of the two surrogate families, up to
+an overall positive scale:
+\begin{equation}
+ \ell_{\mathrm{NLS}}
+ =\left(1+\frac{\lambda}{V}\right)
+   \left[(1-\omega)\ell_{\mathrm{RF}}(\widehat A)
+               +\omega\ell_{\mathrm{LS}}(1)\right],
+ \qquad \omega=\frac{\lambda}{V+\lambda}.
+ \label{eq:dyn-nls-mixture}
+\end{equation}
+The prefactor can be absorbed into the learning rate. The logit-shift
+branch in this identity uses the constant signal $1$, not
+$\widehat A$. Indeed, a mixture with $\widehat A$ in both branches
+would instead have normalized mean update
+$\omega A_i+p_i[(1-\omega)A_i-\omega T_A]$, and is not in general
+equal to the uniform-KL correction.
+
+\Needspace{16\baselineskip}
+\begin{lemma}[Expected logit update and drift cancellation under normed-ls]
+\label{lem:dyn-normed-ls}
+One SGD update with \eqref{eq:dyn-nls-loss} satisfies
+\begin{equation}
+ \mathbb E[\Delta z_i^{\mathrm{NLS}}]
+ =\varepsilon\left[p_iA_i+\lambda\left(\frac1V-p_i\right)\right].
+ \label{eq:dyn-nls-mean}
+\end{equation}
+If $A_i=a>0$ for all $i\in\mathcal S$, then
+\begin{align}
+ \mathbb E[\Delta q_i^{\mathrm{NLS}}]
+ &=\varepsilon(a-\lambda)P_{\mathcal S}q_i(q_i-M_2)
+       +O(\varepsilon^2),
+ \label{eq:dyn-nls-q}\\
+ \mathbb E[\Delta H(q)^{\mathrm{NLS}}]
+ &=-\varepsilon(a-\lambda)P_{\mathcal S}\mathcal C(q)
+       +O(\varepsilon^2).
+ \label{eq:dyn-nls-h}
+\end{align}
+In particular, choosing $\lambda=a$ gives
+\begin{equation}
+ \mathbb E[\Delta z_i^{\mathrm{NLS}}]=\frac{\varepsilon a}{V}
+ \ (i\in\mathcal S),\qquad
+ \mathbb E\left[\Delta\log\frac{q_i}{q_j}\right]=0
+ \ (i,j\in\mathcal S).
+ \label{eq:dyn-nls-cancellation}
+\end{equation}
+The latter identities are exact for a single update, whereas
+$\mathbb E[\Delta q_i]$ and $\mathbb E[\Delta H(q)]$ are
+$O(\varepsilon^2)$.
+\end{lemma}
+
+\begin{proof}
+The gradient of \eqref{eq:dyn-nls-loss} is a linear combination of the
+two gradients in Lemmas~\ref{lem:dyn-reinforce} and
+\ref{lem:dyn-logit-shift}. Substituting the constant signal
+$B_i=1$, and hence $T_B=V$, gives
+\[
+ \mathbb E[\Delta z_i^{\mathrm{NLS}}]
+ =\varepsilon p_iA_i+\frac{\lambda}{V}\varepsilon(1-Vp_i),
+\]
+which proves \eqref{eq:dyn-nls-mean}. On $\mathcal S$ this becomes
+$u_i=(a-\lambda)P_{\mathcal S}q_i+\lambda/V$. The constant
+$\lambda/V$ cancels in both \eqref{eq:dyn-conditional-drift} and
+\eqref{eq:dyn-entropy-drift}, yielding
+\eqref{eq:dyn-nls-q} and \eqref{eq:dyn-nls-h}. Setting
+$\lambda=a$ leaves identical mean logit increments on the subset.
+Equation~\ref{eq:dyn-exact-odds} then proves the exact pairwise claim.
+\end{proof}
+
+The cancellation concerns the expected \emph{within-subset} drift:
+it does not make normed-ls an unbiased estimator of the original
+REINFORCE gradient. The two mean gradients differ by
+$\lambda(\mathbf 1/V-p)$. Also, cancellation of this first-order term
+does not eliminate finite-step stochastic entropy changes.
+
+\paragraph{Deterministic binary token rewards.}
+Suppose $Q_i=r_i\in\{0,1\}$ and
+$\mathcal S=\{i:r_i=1\}$, with $0<P=P_{\mathcal S}<1$.
+Then $a=1-P$, so normed-ls uses $\lambda=1-P$. With
+$U=\sum_{j\notin\mathcal S}p_j^2$, its normalized mean update is
+\[
+ u_i=\begin{cases}
+ (1-P)/V,&i\in\mathcal S,\\
+ (1-P)/V-p_i,&i\notin\mathcal S.
+ \end{cases}
+\]
+Since $\sum_jp_ju_j=(1-P)/V-U$, softmax differentiation yields
+\begin{equation}
+ \mathbb E[\Delta P]
+ =\varepsilon\sum_{i\in\mathcal S}p_i
+       \left(u_i-\sum_jp_ju_j\right)+O(\varepsilon^2)
+ =\varepsilon PU+O(\varepsilon^2).
+ \label{eq:dyn-nls-success}
+\end{equation}
+Thus the first-order success-mass change is positive while the
+first-order conditional distribution change vanishes. A binary terminal
+return alone does not imply this special case: for an intermediate token,
+$Q_i$ is generally a success probability in $[0,1]$.
+
+\subsection{Sample-based implementation and scope}
+\label{app:dynamics-implementation}
+
+For a fixed batch of independent rollouts from the same prefix, the
+sampled normed-ls loss is the average of
+\eqref{eq:dyn-nls-loss}. It requires only the advantage signal, the
+stored sampling log-probability $\log p_Y$, and the current differentiable
+log-probability $\log\pi_W(Y\mid s)$; it does not require the full
+logit vector. The coefficient can be computed as
+$\widehat A+\lambda\exp(-\log p_Y)/V$ and detached before multiplying
+the current log-probability. The sampling probabilities and $\lambda$
+are held fixed during differentiation. The exact expected updates above
+are evaluated at $W=W_0$.
+
+\paragraph{Estimating the correction coefficient.}
+The lemmas condition on a fixed $\lambda$. They also apply after averaging
+over a bounded independent estimate $\widehat\lambda$ with
+$\mathbb E[\widehat\lambda\mid s]=\lambda$, provided it is independent
+of the token used to estimate the regularizer, conditional on $s$ and the
+current policy. For the binary special case, let
+$\{(Y_n,r_n)\}_{n=1}^N$ be independent rollouts from the \emph{same}
+prefix, with $N\ge2$. Set
+\begin{equation}
+ b_{-n}=\frac{1}{N-1}\sum_{m\ne n}r_m,\qquad
+ \widehat A_n=r_n-b_{-n},\qquad
+ \widehat\lambda_n=1-b_{-n}.
+ \label{eq:dyn-loo}
+\end{equation}
+Then $b_{-n}$ is independent of the $n$-th rollout and has mean $P$.
+Consequently,
+\[
+ \mathbb E[\widehat A_n\mid Y_n=i]=r_i-P,\qquad
+ \mathbb E[\widehat\lambda_n\mid Y_n=i]=1-P,
+\]
+so the averaged loss has the same exact expected logit update as
+Lemma~\ref{lem:dyn-normed-ls} with $\lambda=1-P$.
+Different continuations of one prompt generally have different intermediate
+prefixes; their returns cannot be treated as repeated samples from each
+such prefix. A prefix-value approximation or additional conditional
+rollouts require their own estimation-error analysis.
+
+\paragraph{Inverse-probability weights and finite steps.}
+For $Y\sim p$, the correction weight satisfies
+\begin{equation}
+ \mathbb E\left[\frac1{Vp_Y}\right]=1,\qquad
+ \mathbb E\left[\left(\frac1{Vp_Y}\right)^2\right]
+ =\frac1{V^2}\sum_{i=1}^V\frac1{p_i}.
+ \label{eq:dyn-weight-moment}
+\end{equation}
+Small probabilities can therefore give a large second moment.
+Clipping, flooring, or self-normalizing these weights changes their
+expectation and is not covered by the exact cancellation identity.
+Likewise, $\mathbb E[\Delta q]=O(\varepsilon^2)$ does not imply
+$\mathbb E[q^+]=q$ for a finite step, because softmax is nonlinear.
+
+Finally, these are local results for the contribution of a single prefix
+under a frozen-feature readout and plain SGD. Joint updates at different
+prefixes introduce feature-inner-product terms, and updating the full
+network introduces the corresponding logit Jacobian kernel
+\citep{ren2025learningdynamics}. Adaptive optimizer preconditioning and
+policy-ratio clipping also change the update map. The stated lemmas do
+not assert exact drift cancellation under those additional operations.

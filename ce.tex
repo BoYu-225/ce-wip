@@ -1,0 +1,94 @@
+
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2026_conference,times}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsthm,needspace}
+\usepackage{booktabs,tabularx,placeins}
+\usepackage[table]{xcolor}
+\newtheorem{lemma}{Lemma}[section]
+
+
+\title{A Distribution-Matching Perspective on LLM Training Algorithms}
+
+% Authors must not appear in the submitted version. They should be hidden
+% as long as the \iclrfinalcopy macro remains commented out below.
+% Non-anonymous submissions will be rejected without review.
+
+\author{Antiquus S.~Hippocampus, Natalia Cerebro \& Amelie P. Amygdale \thanks{ Use footnote for providing further information
+about author (webpage, alternative address)---\emph{not} for acknowledging
+funding agencies.  Funding acknowledgements go at the end of the paper.} \\
+Department of Computer Science\\
+Cranberry-Lemon University\\
+Pittsburgh, PA 15213, USA \\
+\texttt{\{hippo,brain,jen\}@cs.cranberry-lemon.edu} \\
+\And
+Ji Q. Ren \& Yevgeny LeNet \\
+Department of Computational Neuroscience \\
+University of the Witwatersrand \\
+Joburg, South Africa \\
+\texttt{\{robot,net\}@wits.ac.za} \\
+\AND
+Coauthor \\
+Affiliation \\
+Address \\
+\texttt{email}
+}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+%\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
+\begin{document}
+
+
+\maketitle
+
+\begin{abstract}
+In this work, we propose a unified framework for training algorithms across different stages of modern large language model development, based on the perspective of distribution matching. We show that a broad class of language model training algorithms can be interpreted as minimizing a certain divergence between the current model and a target distribution, and that characterizing the properties of this target distribution provides substantial insight into the behavior of the corresponding training algorithms.
+By analyzing specific forms of the target distribution, we establish that On-Policy Distillation (OPD) enjoys an advantage over classical Knowledge Distillation (KD) when the current model distribution is close to the target distribution, while exhibiting a disadvantage when the two distributions are far apart. Furthermore, when the target distribution itself depends on the model being optimized, we show that the accumulation of stochasticity in training-time estimation can induce a deterministic degradation of the target distribution..
+These results provide a theoretical explanation, at least in part, for the long-term behavior of existing reinforcement learning algorithms, and further study suggest several principled and reliable approaches for mitigating the associated degradation. We believe that this theoretical perspective can deepen the research community's understanding of language model training algorithms and provide useful guidance for future research.
+\end{abstract}
+
+\input{sections/introduction.tex}
+
+\input{sections/framework_definition.tex}
+
+\input{sections/opd_sft.tex}
+
+\input{sections/variance_accumulation.tex}
+
+\input{sections/rl_theory.tex}
+
+\input{sections/limitation.tex}
+
+\input{sections/conclusion.tex}
+
+\bibliography{iclr2026_conference,appendix_references,ce}
+\bibliographystyle{iclr2026_conference}
+
+\clearpage
+\appendix
+\numberwithin{equation}{section}
+\input{appendices/reward_reweighting}
+\input{appendices/conditional_kl_maxrl}
+\input{appendices/proximal_gradient_noise}
+\input{appendices/distal_gradient_variance}
+\input{appendices/variance_accumulation}
+\input{appendices/rl_target_entropy}
+\input{appendices/token_learning_dynamics}
+
+
+\end{document}

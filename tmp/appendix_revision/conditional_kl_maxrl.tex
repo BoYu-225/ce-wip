@@ -1,0 +1,168 @@
+\section{Proof of the Success-Conditioned KL Identity and Its MaxRL Connection}
+\label{app:conditional-kl-maxrl}
+
+We prove Lemma~\ref{lem:conditional-kl-maxrl} and specify how its exact
+objective relates to the finite-order objectives of
+\citet{tajwar_maximum_2026}.
+
+\paragraph{Full assumptions and gradient statement.}
+Expectations over $x\sim\mathcal D$ use the same fixed empirical prompt
+distribution as in the main text. For every such prompt, let
+$\mathcal Y_x$ be a fixed nonempty finite response space and let
+$\pi_\theta(y\mid x)$ be differentiable and strictly positive on it
+in an open parameter domain. The reward $r(x,y)\in\{0,1\}$ is fixed
+and independent of $\theta$. Assume that
+$\rho_\theta(x)=\sum_y r(x,y)\pi_\theta(y\mid x)>0$ for every prompt.
+The success set $\mathcal S_x^+=\{y\in\mathcal Y_x:r(x,y)=1\}$ is
+therefore nonempty and independent of $\theta$. Define
+$\pi_\theta^+(y\mid x)=r(x,y)\pi_\theta(y\mid x)/\rho_\theta(x)$.
+Under these assumptions, \eqref{eq:conditional-kl-maxrl} holds, and its
+gradient satisfies
+\begin{equation}
+ \nabla_\theta\mathcal J_{\mathrm{MaxRL}}^{(\infty)}
+ =\mathbb E_{x\sim\mathcal D,y\sim\pi_\theta(\cdot\mid x)}
+ \left[\frac{r(x,y)}{\rho_\theta(x)}
+              \nabla_\theta\log\pi_\theta(y\mid x)\right].
+ \label{eq:maxrl-gradient}
+\end{equation}
+All differentiations below are of finite sums.
+
+\begin{proof}
+\textit{The KL identity.}
+For a fixed prompt with $\rho_\theta(x)>0$, conditioning gives
+\begin{equation}
+ \pi_\theta^+(y\mid x)
+ =\frac{\pi_\theta(y\mid x)}{\rho_\theta(x)}
+       \quad(y\in\mathcal S_x^+),
+ \qquad \pi_\theta^+(y\mid x)=0
+       \quad(y\notin\mathcal S_x^+).
+ \label{eq:app-success-conditioning}
+\end{equation}
+Consequently, the density ratio in the forward KL is constant on the
+support of $\pi_\theta^+$:
+\begin{align}
+ D_{\mathrm{KL}}(\pi_\theta^+\Vert\pi_\theta)
+ &=\sum_{y\in\mathcal S_x^+}\pi_\theta^+(y\mid x)
+             \log\frac{\pi_\theta^+(y\mid x)}{\pi_\theta(y\mid x)}
+ \nonumber\\
+ &=\sum_{y\in\mathcal S_x^+}\pi_\theta^+(y\mid x)
+             \log\frac1{\rho_\theta(x)}
+ =-\log\rho_\theta(x).
+ \label{eq:app-success-kl}
+\end{align}
+Taking the negative expectation over prompts establishes
+\eqref{eq:conditional-kl-maxrl}. In the opposite direction,
+$D_{\mathrm{KL}}(\pi_\theta\Vert\pi_\theta^+)=+\infty$ whenever
+$0<\rho_\theta(x)<1$, since the conditional target assigns zero
+probability to every unsuccessful response.
+
+\noindent\textit{The gradient.}
+Using $\nabla_\theta\pi_\theta
+=\pi_\theta\nabla_\theta\log\pi_\theta$ and the fixed reward gives
+\begin{align}
+ \nabla_\theta\log\rho_\theta(x)
+ &=\frac1{\rho_\theta(x)}\sum_{y\in\mathcal Y_x}
+                 r(x,y)\nabla_\theta\pi_\theta(y\mid x)
+ \nonumber\\
+ &=\mathbb E_{y\sim\pi_\theta(\cdot\mid x)}
+       \left[\frac{r(x,y)}{\rho_\theta(x)}
+                    \nabla_\theta\log\pi_\theta(y\mid x)\right]
+ \nonumber\\
+ &=\mathbb E_{y\sim\pi_\theta^+(\cdot\mid x)}
+                    [\nabla_\theta\log\pi_\theta(y\mid x)].
+ \label{eq:app-success-score}
+\end{align}
+Averaging over prompts proves \eqref{eq:maxrl-gradient}.
+\end{proof}
+
+\paragraph{A moving target versus a frozen target.}
+In \eqref{eq:conditional-kl-maxrl}, both arguments of the KL depend on
+$\theta$; its gradient is justified by the exact identity above.
+There is also a precise local interpretation as ordinary forward-KL
+matching to a detached target. At a current parameter $\theta_0$, let
+$q_x=\pi_{\theta_0}^+(\cdot\mid x)$ and hold $q_x$ fixed. Since $q_x$
+is supported on $\mathcal S_x^+$, for any candidate parameter $\theta$,
+\begin{equation}
+ D_{\mathrm{KL}}(q_x\Vert\pi_\theta(\cdot\mid x))
+ =D_{\mathrm{KL}}(q_x\Vert\pi_\theta^+(\cdot\mid x))
+       -\log\rho_\theta(x).
+ \label{eq:app-success-frozen-decomposition}
+\end{equation}
+To see this, substitute
+$\pi_\theta(y\mid x)=\rho_\theta(x)\pi_\theta^+(y\mid x)$
+on $\mathcal S_x^+$ into the logarithm. The first KL on the right
+vanishes at $\theta=\theta_0$, and its gradient there is
+\[
+ -\sum_{y\in\mathcal S_x^+}\pi_{\theta_0}^+(y\mid x)
+       \left.\nabla_\theta\log\pi_\theta^+(y\mid x)
+       \right|_{\theta=\theta_0}
+ =-\left.\nabla_\theta\sum_{y\in\mathcal S_x^+}
+       \pi_\theta^+(y\mid x)\right|_{\theta=\theta_0}=0.
+\]
+It follows that
+\begin{equation}
+ \left.-\nabla_\theta\mathbb E_{x\sim\mathcal D}
+       D_{\mathrm{KL}}(q_x\Vert\pi_\theta(\cdot\mid x))
+       \right|_{\theta=\theta_0}
+ =\left.\nabla_\theta\mathcal J_{\mathrm{MaxRL}}^{(\infty)}(\theta)
+       \right|_{\theta=\theta_0}.
+ \label{eq:app-success-frozen-gradient}
+\end{equation}
+This is equality of gradients at the current policy, not equality of
+the two objectives at arbitrary parameters. With a frozen target,
+additional optimization also penalizes changes in the success-conditioned
+distribution through the first term in
+\eqref{eq:app-success-frozen-decomposition}.
+
+\paragraph{Finite-order MaxRL and the standard RL approximation.}
+For $0<\rho\le1$, integrating the geometric series on $[0,1-\rho]$
+gives $\log\rho=-\sum_{k=1}^{\infty}(1-\rho)^k/k$.
+Thus the order-$K$ truncation, with $K\ge1$, is
+\begin{equation}
+ \mathcal J_{\mathrm{MaxRL}}^{(K)}(\theta)
+ =-\mathbb E_{x\sim\mathcal D}
+       \left[\sum_{k=1}^{K}\frac{(1-\rho_\theta(x))^k}{k}\right],
+ \label{eq:app-maxrl-truncation}
+\end{equation}
+which is the finite-order MaxRL objective of
+\citet{tajwar_maximum_2026}, expressed in our sequence-level notation.
+For $K$ independent responses to $x$, $(1-\rho_\theta(x))^K$ is the
+probability that all $K$ fail. Differentiating the finite sum and then
+summing the geometric series yields
+\begin{align}
+ \nabla_\theta\mathcal J_{\mathrm{MaxRL}}^{(K)}
+ &=\mathbb E_{x\sim\mathcal D}
+       \left[\sum_{k=1}^{K}(1-\rho_\theta(x))^{k-1}
+                         \nabla_\theta\rho_\theta(x)\right]
+ \nonumber\\
+ &=\mathbb E_{x\sim\mathcal D}
+       \left[\frac{1-(1-\rho_\theta(x))^K}{\rho_\theta(x)}
+                         \nabla_\theta\rho_\theta(x)\right].
+ \label{eq:app-maxrl-truncated-gradient}
+\end{align}
+At $K=1$, \eqref{eq:app-maxrl-truncation} equals
+$\mathcal J_{\mathrm{RL}}-1$, so the gradients coincide exactly.
+As $K\to\infty$, the objective and gradient converge to
+\eqref{eq:conditional-kl-maxrl} and \eqref{eq:maxrl-gradient}; the prompt
+distribution has finite support and every $\rho_\theta(x)$ is positive,
+so these limits commute with its expectation at each fixed parameter.
+More precisely,
+\begin{equation}
+ 0\le\mathcal J_{\mathrm{MaxRL}}^{(K)}
+             -\mathcal J_{\mathrm{MaxRL}}^{(\infty)}
+ \le\mathbb E_{x\sim\mathcal D}
+       \left[\frac{(1-\rho_\theta(x))^{K+1}}
+                    {(K+1)\rho_\theta(x)}\right],
+ \label{eq:app-maxrl-truncation-error}
+\end{equation}
+because $1/k\le1/(K+1)$ in the series tail and
+$\sum_{k>K}(1-\rho)^k=(1-\rho)^{K+1}/\rho$.
+In particular, $\log\rho=(\rho-1)+O((1-\rho)^2)$ as $\rho\to1$;
+calling standard RL a first-order approximation refers to this expansion,
+and does not imply a uniformly accurate approximation for rare successes.
+
+If $\rho_\theta(x)=0$, the conditional target is undefined and the
+log-likelihood is $-\infty$, so that prompt lies outside the lemma's
+assumptions. If $\rho_\theta(x)=1$ under the stated full-support model,
+all responses succeed, $\pi_\theta^+=\pi_\theta$, and the KL and local
+gradient are both zero.

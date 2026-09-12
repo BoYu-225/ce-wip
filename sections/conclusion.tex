@@ -1,0 +1,7 @@
+\section{Conclusions}
+
+Distribution matching offers a new perspective on LLM training algorithms. The objective of a variety of LLM training algorithms can be unified as a divergence between the policy model and a target distribution. The target distribution itself also serves as an effective lens through which the properties of training algorithms can be analyzed. In this work, by conducting a variance analysis under specific forms of the target distribution, we provide a theoretical characterization of the regimes in which OPD and KD are respectively effective.
+
+When the target distribution depends on the model itself, on the other hand, certain forms of performance degradation in the training process can be naturally attributed to the drift of the target distribution. We establish and empirically validate a phenomenon in which the accumulation of optimization variance leads to a progressive decrease in the entropy of the target distribution, providing a possible explanation for degradation phenomena observed in reinforcement learning.
+
+Furthermore, when the RL gradient remains nonzero, analyzing the drift of the target distribution can also suggest principled and reliable correction mechanisms. We believe that our theoretical framework and the associated results can be extended to the study of a broader class of training algorithms and provide useful insights for future research.

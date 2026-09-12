@@ -1,0 +1,104 @@
+\section{Proof of Reward Reweighting Under a Forward-KL Restriction}
+\label{app:reward-reweighting}
+
+This section gives the full assumptions and proof of
+Lemma~\ref{lem:reward-reweighting}.
+
+\paragraph{Formal statement and setup.}
+Fix a prompt $x$, a nonempty finite response space $\mathcal Y_x$, and a
+current policy $\pi_\theta(y\mid x)>0$ for all $y\in\mathcal Y_x$.
+Let $r(x,y)$ be a fixed real-valued reward and $\beta>0$.
+The response space
+can, for example, consist of all responses under a fixed maximum generation
+length and a finite vocabulary, with termination included in the sequence
+probability. The prompt and current parameter are fixed throughout this
+proof. Write $p_y=\pi_\theta(y\mid x)$, $r_y=r(x,y)$, and $q_y=q(y\mid x)$.
+The optimization ranges over the full probability simplex on $\mathcal Y_x$:
+\begin{equation}
+ q^*=\argmax_q\left\{\sum_yq_yr_y
+                    -\beta D_{\mathrm{KL}}(p\Vert q)\right\}.
+ \label{eq:app-reward-forward-objective}
+\end{equation}
+Its unique solution is \eqref{eq:reward-reciprocal-tilt}, where
+$\lambda_x>\max_y r_y$ is the unique solution of
+\begin{equation}
+ \sum_{y\in\mathcal Y_x}\frac{\beta p_y}{\lambda_x-r_y}=1.
+ \label{eq:app-reward-normalization}
+\end{equation}
+This solution preserves the conditional distribution on every nonempty
+reward level set. The optimization is over distributions; a parameterized
+policy need not realize its solution.
+
+\begin{proof}
+\textit{The optimal distribution.}
+Up to a constant independent of $q$, the objective is
+$\sum_yq_yr_y+\beta\sum_yp_y\log q_y$.
+It approaches $-\infty$ at the simplex boundary because $p_y>0$.
+It has an interior maximizer and is strictly concave there: its Hessian
+is diagonal with entries $-\beta p_y/q_y^2<0$.
+Introducing a multiplier $\lambda_x$ for $\sum_yq_y=1$, stationarity gives
+\begin{equation}
+ r_y+\frac{\beta p_y}{q_y}-\lambda_x=0,
+ \qquad q_y=\frac{\beta p_y}{\lambda_x-r_y}.
+ \label{eq:app-reward-forward-stationarity}
+\end{equation}
+Positivity requires $\lambda_x>r_{\max}:=\max_y r_y$.
+On $(r_{\max},\infty)$ the function
+$f(\lambda)=\sum_y\beta p_y/(\lambda-r_y)$ is continuous and strictly
+decreasing, with limits $+\infty$ and $0$ at the two endpoints.
+There is therefore exactly one $\lambda_x$ satisfying $f(\lambda_x)=1$.
+Strict concavity proves that the resulting distribution is the unique
+maximizer, establishing \eqref{eq:reward-reciprocal-tilt}.
+
+\noindent\textit{Conditioning on a reward level.}
+Set $w(a)=\beta/(\lambda_x-a)$, so that $q_y^*=p_yw(r_y)$.
+For any nonempty reward level set
+$\mathcal S_a=\{y:r_y=a\}$,
+\begin{equation}
+ q^*(y\mid y\in\mathcal S_a)
+ =\frac{p_yw(a)}{\sum_{z\in\mathcal S_a}p_zw(a)}
+ =\frac{p_y}{\sum_{z\in\mathcal S_a}p_z}
+ =p(y\mid y\in\mathcal S_a),\qquad y\in\mathcal S_a.
+ \label{eq:app-reward-conditional-invariance}
+\end{equation}
+This proves the final claim.
+\end{proof}
+
+\paragraph{Binary rewards and exponential parametrization.}
+Suppose $r_y\in\{0,1\}$ and $0<\rho_\theta(x)=\sum_yp_yr_y<1$.
+The optimizer multiplies success probabilities by
+$\beta/(\lambda_x-1)$ and failure probabilities by $\beta/\lambda_x$,
+where $\lambda_x>1$. Equivalently, in this binary case,
+\begin{equation}
+ q_y^*=\frac{p_y\exp(\alpha_xr_y)}
+              {1-\rho_\theta(x)+\rho_\theta(x)e^{\alpha_x}},
+ \qquad \alpha_x=\log\frac{\lambda_x}{\lambda_x-1}>0.
+ \label{eq:app-reward-binary-tilt}
+\end{equation}
+Thus success mass increases while $\pi_\theta^+$ remains unchanged.
+If all rewards coincide, the optimizer equals $p$.
+
+\paragraph{Relation to a KL constraint.}
+Let $q_\beta^*$ denote the optimizer above and set
+$\delta_\beta=D_{\mathrm{KL}}(p\Vert q_\beta^*)$.
+If $D_{\mathrm{KL}}(p\Vert q)\le\delta_\beta$,
+optimality of $q_\beta^*$ implies
+\begin{equation}
+ \mathbb E_q[r]
+ \le\mathbb E_{q_\beta^*}[r]
+       +\beta\bigl(D_{\mathrm{KL}}(p\Vert q)-\delta_\beta\bigr)
+ \le\mathbb E_{q_\beta^*}[r].
+ \label{eq:app-reward-constrained}
+\end{equation}
+Thus $q_\beta^*$ also uniquely maximizes reward under the KL budget
+$\delta_\beta$: equality throughout would require equality in the
+strictly optimized regularized objective.
+Conversely, for a positive KL budget the reference policy is strictly
+feasible, so the concave optimization problem admits a Lagrange multiplier.
+Whenever its KL multiplier is positive, the constrained optimizer has
+the corresponding form in Lemma~\ref{lem:reward-reweighting}.
+A zero budget forces $q=p$; a zero multiplier or a saturated reward
+optimum requires separate boundary treatment and need not yield a unique
+optimizer of the constrained problem. In particular, the lemma does not
+assert that unconstrained reward maximization preserves conditional
+distributions.

@@ -1,0 +1,7 @@
+\section{Limitation}
+
+In the previous sections we proposed a framework that unifies different training algorithms via distribution matching objective. For RL algorithms we only analyzed the simplest 0-1 binary reward setting. For more generalized multi-value reward RL we can also extend the distribution matching by introducing a randomized acceptance event, see \hyperref[app:conditional-kl-maxrl]{Appendix~\ref*{app:conditional-kl-maxrl}}. However, a detailed investigation of its properties is left for future work.
+
+A more important limitation of this work is that, we did not consider generalization ability of these methods. The main theoretical results derived in this paper apply directly to the behavior on the training set, while a more complete understanding of the corresponding behavior on the test set requires further theoretical analysis. Nevertheless, many of our experiments are also conducted on the test set, where we empirically observe behavior similar to that on the training set.
+
+% TODO link to empirical results on the test set

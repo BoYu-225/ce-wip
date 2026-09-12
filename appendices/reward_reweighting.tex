@@ -1,0 +1,66 @@
+\section{Proof of Reward Reweighting Under a Forward-KL Restriction}
+\label{app:reward-reweighting}
+
+For Lemma~\ref{lem:reward-reweighting}, fix $x$, a finite nonempty
+$\mathcal Y_x$, $p_y=\pi_\theta(y\mid x)>0$, a real-valued reward
+$r_y=r(x,y)$, and $\beta>0$. Optimization is over the probability simplex,
+independently of model parametrization.
+
+\begin{proof}
+The objective
+\begin{equation}
+ F(q)=\sum_yq_yr_y-\beta D_{\mathrm{KL}}(p\Vert q)
+ \label{eq:app-reward-forward-objective}
+\end{equation}
+is strictly concave, with Hessian
+$-\beta\operatorname{diag}(p_y/q_y^2)$, and tends to $-\infty$ at the
+boundary. Its unique maximizer is therefore interior. The Lagrange
+multiplier $\lambda_x$ for $\sum_yq_y=1$ gives
+\begin{equation}
+ r_y+\frac{\beta p_y}{q_y}-\lambda_x=0
+ \quad\Longrightarrow\quad
+ q_y^*=\frac{\beta p_y}{\lambda_x-r_y},\qquad
+ \sum_y\frac{\beta p_y}{\lambda_x-r_y}=1.
+ \label{eq:app-reward-forward-stationarity}
+\end{equation}
+On $(\max_y r_y,\infty)$, the last sum decreases continuously from
+$+\infty$ to $0$, uniquely determining $\lambda_x$ and proving
+\eqref{eq:reward-reciprocal-tilt}. For any nonempty reward level set
+$\mathcal S_a=\{y:r_y=a\}$, the multiplier cancels:
+\begin{equation}
+ q^*(y\mid\mathcal S_a)
+ =\frac{p_y\beta/(\lambda_x-a)}
+        {\sum_{z\in\mathcal S_a}p_z\beta/(\lambda_x-a)}
+ =p(y\mid\mathcal S_a),\qquad y\in\mathcal S_a.
+ \label{eq:app-reward-conditional-invariance}
+\end{equation}
+\end{proof}
+
+\paragraph{Binary rewards.}
+For $r_y\in\{0,1\}$ and $0<\rho_\theta(x)<1$, success and failure
+probabilities are multiplied by $\beta/(\lambda_x-1)$ and
+$\beta/\lambda_x$, respectively. Equivalently,
+\begin{equation}
+ q_y^*=\frac{p_y e^{\alpha_xr_y}}
+ {1-\rho_\theta(x)+\rho_\theta(x)e^{\alpha_x}},
+ \qquad \alpha_x=\log\frac{\lambda_x}{\lambda_x-1}>0.
+ \label{eq:app-reward-binary-tilt}
+\end{equation}
+Hence success mass increases and $\pi_\theta^+$ is preserved.
+If all rewards coincide, $q^*=p$.
+
+\paragraph{KL constraint.}
+Set $\delta_\beta=D_{\mathrm{KL}}(p\Vert q^*)$.
+For any $q$ with $D_{\mathrm{KL}}(p\Vert q)\le\delta_\beta$, optimality gives
+\begin{equation}
+ \mathbb E_q[r]\le\mathbb E_{q^*}[r]
+ +\beta\bigl(D_{\mathrm{KL}}(p\Vert q)-\delta_\beta\bigr)
+ \le\mathbb E_{q^*}[r],
+ \label{eq:app-reward-constrained}
+\end{equation}
+with equality only at $q=q^*$. Conversely, for a positive budget,
+$p$ is strictly feasible; a positive KL multiplier gives the same
+regularized solution. Zero budget forces $q=p$, while a zero multiplier
+or a saturated reward optimum need not give a unique constrained solution.
+Conditional preservation is thus a property of this regularized update,
+not of unrestricted reward maximization.

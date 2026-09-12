@@ -1,0 +1,81 @@
+\section{Proof of Gradient Noise at the Proximal Limit}
+\label{app:proximal-gradient-noise}
+
+For Lemma~\ref{lem:proximal-gradient-noise}, fix a prompt $x$, a finite
+response space $\mathcal Y_x$, and a positive teacher $\pi_t$ independent
+of $\theta$. Assume $\pi_\theta(y\mid x)>0$ is continuously differentiable
+on a neighborhood of $\theta_0$, with $\pi_{\theta_0}=\pi_t$.
+Write $s_\theta(y\mid x)=\nabla_\theta\log\pi_\theta(y\mid x)$ and
+$w_\theta(y\mid x)=\log[\pi_t(y\mid x)/\pi_\theta(y\mid x)]$.
+For $m\ge1$ independent samples from the respective distributions, define
+\begin{align}
+ \widehat g_{\mathrm{KD}}(\theta)
+ &=\frac1m\sum_{i=1}^m s_\theta(Y_i\mid x),
+ &Y_i&\overset{\mathrm{iid}}{\sim}\pi_t(\cdot\mid x),
+ \label{eq:proximal-kd-estimator}\\
+ \widehat g_{\mathrm{OPD}}(\theta)
+ &=\frac1m\sum_{i=1}^m w_\theta(\widetilde Y_i\mid x)
+                          s_\theta(\widetilde Y_i\mid x),
+ &\widetilde Y_i&\overset{\mathrm{iid}}{\sim}\pi_\theta(\cdot\mid x).
+ \label{eq:proximal-opd-estimator}
+\end{align}
+The sampled responses and OPD weights are detached during the score update.
+
+\begin{proof}
+For every $\theta$, the score identity gives
+$\mathbb E_{\pi_\theta}[s_\theta]=\nabla_\theta\sum_y\pi_\theta(y\mid x)=0$.
+Hence the per-prompt gradients of the negative-KL objectives are
+\begin{align}
+ \nabla_\theta[-D_{\mathrm{KL}}(\pi_t\Vert\pi_\theta)]
+ &=\mathbb E_{\pi_t}[s_\theta],
+ \label{eq:proximal-kd-gradient}\\
+ \nabla_\theta[-D_{\mathrm{KL}}(\pi_\theta\Vert\pi_t)]
+ &=\mathbb E_{\pi_\theta}[(w_\theta-1)s_\theta]
+ =\mathbb E_{\pi_\theta}[w_\theta s_\theta],
+ \label{eq:proximal-opd-gradient}
+\end{align}
+proving unbiasedness. At $\theta_0$, $w_{\theta_0}(y\mid x)=0$ for
+every response, so each OPD summand vanishes. Meanwhile,
+$\mathbb E_{\pi_t}[s_{\theta_0}]=0$; sample independence yields
+\begin{equation}
+ \operatorname{Cov}(\widehat g_{\mathrm{KD}}(\theta_0))
+ =\frac1m\mathbb E_{\pi_t}[s_{\theta_0}s_{\theta_0}^{\top}]
+ =\frac1m F_x(\theta_0).
+ \label{eq:app-proximal-fisher}
+\end{equation}
+Consequently, $\mathbb E\|\widehat g_{\mathrm{KD}}(\theta_0)\|_2^2
+=\operatorname{Tr}F_x(\theta_0)/m>0$ whenever the Fisher trace is positive.
+This implies positive probability of a nonzero KD estimate, rather than
+nonzero estimates for every possible batch.
+\end{proof}
+
+\paragraph{A neighborhood of the limit.}
+For $A\in\{\mathrm{KD},\mathrm{OPD}\}$, define the estimation error
+$V_A(\theta)=\mathbb E\|\widehat g_A(\theta)
+-\mathbb E\widehat g_A(\theta)\|_2^2$.
+The finite-sum expressions
+\begin{align}
+ mV_{\mathrm{KD}}(\theta)
+ &=\mathbb E_{\pi_t}\|s_\theta\|_2^2
+       -\|\mathbb E_{\pi_t}s_\theta\|_2^2,\nonumber\\
+ mV_{\mathrm{OPD}}(\theta)
+ &=\mathbb E_{\pi_\theta}[w_\theta^2\|s_\theta\|_2^2]
+       -\|\mathbb E_{\pi_\theta}[w_\theta s_\theta]\|_2^2
+ \label{eq:proximal-estimation-error}
+\end{align}
+are continuous. Since $V_{\mathrm{OPD}}(\theta_0)=0$ and
+$V_{\mathrm{KD}}(\theta_0)=\operatorname{Tr}F_x(\theta_0)/m$,
+a positive Fisher trace implies $V_{\mathrm{OPD}}<V_{\mathrm{KD}}$
+throughout some neighborhood of $\theta_0$.
+
+\paragraph{Estimator scope.}
+The zero-noise conclusion uses the log-ratio estimator in
+\eqref{eq:proximal-opd-estimator}: retaining the zero-mean score term
+$-s_\theta$ in \eqref{eq:proximal-opd-gradient} gives another unbiased
+estimator, but it need not vanish samplewise at the limit. Likewise,
+exact teacher-distribution cross-entropy, including full-vocabulary KD at
+each sampled prefix, has zero gradient when teacher and student coincide.
+The comparison concerns sampled-response KD, with a fixed teacher and
+unmodified sampling distributions. Averaging independent prompt-response
+pairs over the fixed $\mathcal D$ preserves the limit result, replacing
+$F_x$ by $\mathbb E_{x\sim\mathcal D}F_x$ when equality holds for every prompt.

@@ -1,0 +1,55 @@
+\section{Variance Accumulation in Iterative Algorithms}\label{sec:variance-accumulation}
+
+Distillation algorithms have a fixed target distribution for the student to fit. Although we have showed in \hyperref[lem:reward-reweighting]{Lemma~\ref*{lem:reward-reweighting}}, the ideal single-step update of RL or MaxRL with binary reward will not affect the target distribution, this property may not hold in real applications. One important reason is that, there are non-negligible random noise in the one optimization step. This could be caused by the empirical estimator of the objective, the approximation of the optimizer and the numerical precision of the model parameter.
+
+In this section we study \emph{variance accumulation} in iterative training and its relation to the observed entropy dynamics, starting from the gradient noise in self-distillation.
+
+\subsection{Iterative Self-Distillation}
+
+We start from \emph{iterative self-distillation}: each step samples responses from the current model and increases their log-likelihood, treating the sampling distribution as fixed during differentiation. This is the uncentered RL update with reward $1$ for every response, and coincides with sampled-response KD at the proximal limit. Unlike KD, the teacher is replaced by the updated student after each step. This is also the common practice adopted by RL algorithms.
+
+By \hyperref[lem:proximal-gradient-noise]{Lemma~\ref*{lem:proximal-gradient-noise}}, the sampled gradient has zero mean but generally nonzero variance. Fix a prompt $x$, write $\pi_k=\pi_{\theta_k}(\cdot\mid x)$, and let $\mathcal F_k$ denote the training history before sampling at step $k$. Then we have the following result:
+
+\begin{lemma}[Martingale structure of self-distillation]
+\label{lem:self-distillation-martingale}
+For iterative self-distillation with step size $\eta_k$, the parameters form a martingale. The induced probabilities satisfy the same property to first order:
+\begin{equation}
+ \mathbb E[\theta_{k+1}\mid\mathcal F_k]=\theta_k,
+ \qquad
+ \mathbb E[\pi_{k+1}(y)\mid\mathcal F_k]
+ =\pi_k(y)+O(\eta_k^2).
+ \label{eq:self-distillation-martingale}
+\end{equation}
+\end{lemma}
+\noindent\hyperref[app:variance-accumulation]{Proof: Appendix~\ref*{app:variance-accumulation}.}
+
+The martingale property also yields an entropy decrease when entropy is locally concave along the updates.
+
+\begin{lemma}[Conditional decrease of expected entropy]
+\label{lem:self-distillation-entropy}
+Let $h_x(\theta)=H(\pi_\theta(\cdot\mid x))$. If $h_x$ is concave along every possible update segment from $\theta_k$ to $\theta_{k+1}$, then
+\begin{equation}
+ \mathbb E[H(\pi_{k+1})\mid\mathcal F_k]\le H(\pi_k).
+ \label{eq:self-distillation-entropy}
+\end{equation}
+The inequality is strict under strictly negative curvature along nonzero updates and nonzero conditional update variance. If these conditions hold at each step, expected entropy decreases over training.
+\end{lemma}
+\noindent\hyperref[app:variance-accumulation]{Proof: Appendix~\ref*{app:variance-accumulation}.}
+
+Thus sampling noise can deterministicly reduce expected entropy even when the parameter update has zero mean, while iterative generation severely amplifies this effect. We should note that the iterative training is unavoidable in RL or self-distillation theoretically, since the distribution drift already occurs, the objective itself will require updating the actor's parameter or introducing importance sampling correction~\citep{schulman_proximal_2017}.
+
+This expectational decrease of entropy should be understood in this way: We have no guarantee on the deterministic direction of entropy in each step. If one training step happens to generate some samples with low probability, self-distillation on these samples will actually increase the sample entropy. So this is not contradictive with previous researches that carefully analyzed the condition when a single learning step will increase or decrease the entropy~\citep{cui_entropy_2025, ren_learning_2025, jin_revisiting_2026, wang_entropy_2026}. This result in fact takes a step further, and answers if we are doing the update multiple times, or in the long-term of training, how should the entropy change on average. The long-term expectation cancels the randomness in a single step update, and gives a deterministic decrement.
+
+% TODO Empirical results on iterative self-distillation
+
+\subsection{Reversed Iterative Self-Distillation}
+
+The empirical results of iterative self-distillation is somehow not very surprising, since we can easily make another explanation: the sequence with higher probability are more likely to be samples and strengthened, naturally resulting in a sharpened distribution. This is often used to explain the entropy collapse in RL~\citep{cui_entropy_2025, hao_rethinking_2026}. This is an intuitive explanation that treats the entropy collapse as a property of the expectation form RL algorithm rather than empirical variance accumulation.
+
+To further distinguish the potential cause, we designed reversed iterative self-distillation experiments, where these two explanations could give two contradictive predictions, while our experiments support the counter-intuitive one.
+
+The reversed iterative self-distillation is achieved by setting all rewards in self-distillation to -1. This indicates that we are pushing down the probability of every sequence generated by the policy model, and the sequence with higher sample probability will receive more punishment. If we accept the common explanation on the entropy dynamics in LLM training, this would flatten the sample distribution and increase the sample entropy of the policy model.
+
+However, changing the training direction in self-distillation do not affact the expectation of gradient mean, and hence the martingale property in \hyperref[lem:self-distillation-martingale]{Lemma~\ref*{lem:self-distillation-martingale}} still holds. Then with the same derivation as \hyperref[lem:self-distillation-entropy]{Lemma~\ref*{lem:self-distillation-entropy}}, the variance accumulation will also guatantee a decrement of sample entropy in expectation.
+
+% TODO Empirical results on reversed iterative self-distillation

@@ -1,0 +1,67 @@
+\section{Martingales and Entropy in Self-Distillation}
+\label{app:variance-accumulation}
+
+For Lemmas~\ref{lem:self-distillation-martingale}--\ref{lem:self-distillation-entropy}, fix a prompt $x$ and a
+finite response space $\mathcal Y_x$. Assume a positive, twice continuously
+differentiable policy, integrable iterates and increments, and
+$\mathcal F_k$-measurable step sizes $\eta_k$ and batch sizes $m_k\ge1$.
+With the teacher frozen within each step, plain SGD gives
+\begin{equation}
+ \theta_{k+1}=\theta_k+\eta_k\widehat g_k,
+ \qquad
+ \widehat g_k=\frac1{m_k}\sum_{i=1}^{m_k}s_{\theta_k}(Y_{k,i}\mid x),
+ \qquad Y_{k,i}\mid\mathcal F_k
+     \overset{\mathrm{iid}}{\sim}\pi_k,
+ \label{eq:self-distillation-sgd}
+\end{equation}
+where $\pi_k(y)=\pi_{\theta_k}(y\mid x)$ and
+$s_\theta=\nabla_\theta\log\pi_\theta$.
+
+\begin{proof}[Proof of Lemma~\ref{lem:self-distillation-martingale}]
+The score identity and conditional independence yield
+\begin{equation}
+ \mathbb E[\widehat g_k\mid\mathcal F_k]=0,
+ \qquad
+ \operatorname{Cov}(\theta_{k+1}-\theta_k\mid\mathcal F_k)
+ =\frac{\eta_k^2}{m_k}F_x(\theta_k),
+ \label{eq:self-distillation-sgd-covariance}
+\end{equation}
+so $\mathbb E[\theta_{k+1}\mid\mathcal F_k]=\theta_k$.
+If $M_{k,y}$ bounds the operator norm of the probability Hessian along the update segments,
+Taylor expansion gives
+\begin{equation}
+ \left|\mathbb E[\pi_{k+1}(y)\mid\mathcal F_k]-\pi_k(y)\right|
+ \le \frac{M_{k,y}\eta_k^2}{2m_k}\operatorname{Tr}F_x(\theta_k)
+ =O(\eta_k^2),
+ \label{eq:self-distillation-probability-remainder}
+\end{equation}
+locally as $\eta_k\to0$ for fixed $\theta_k$.
+\end{proof}
+
+For the entropy result, let $h_x(\theta)=-\sum_y\pi_\theta(y\mid x)
+\log\pi_\theta(y\mid x)$ and $d_k=\theta_{k+1}-\theta_k$.
+Assume that, for every possible update $d_k$ and $t\in[0,1]$,
+\begin{equation}
+ d_k^\top\nabla_\theta^2h_x(\theta_k+t d_k)d_k
+ \le-\mu_k\|d_k\|_2^2,
+ \qquad \mu_k\ge0,
+ \label{eq:self-distillation-entropy-curvature}
+\end{equation}
+where $\mu_k$ is $\mathcal F_k$-measurable. The case $\mu_k=0$
+is concavity along the update segments; $\mu_k>0$ gives strict decrease
+whenever the update variance is nonzero.
+
+\begin{proof}[Proof of Lemma~\ref{lem:self-distillation-entropy}]
+Taylor's formula with \eqref{eq:self-distillation-entropy-curvature},
+$\mathbb E[d_k\mid\mathcal F_k]=0$, and
+\eqref{eq:self-distillation-sgd-covariance} yields
+\begin{equation}
+ \mathbb E[H(\pi_{k+1})\mid\mathcal F_k]
+ \le H(\pi_k)-\frac{\mu_k\eta_k^2}{2m_k}
+       \operatorname{Tr}F_x(\theta_k)
+ \le H(\pi_k).
+ \label{eq:self-distillation-entropy-bound}
+\end{equation}
+Taking expectations proves the claim, with strict decrease if the
+subtracted term is positive with positive probability.
+\end{proof}

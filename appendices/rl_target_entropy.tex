@@ -1,0 +1,33 @@
+\section{Entropy of the Success-Conditioned RL Target}
+\label{app:rl-target-entropy}
+
+For Lemma~\ref{lem:rl-target-entropy}, fix a prompt $x$, a finite response
+space $\mathcal Y_x$, and a deterministic binary reward $r(x,y)$.
+Write $\rho=\rho_\theta(x)\in(0,1)$ and suppress the conditioning on $x$.
+The success- and failure-conditioned distributions are
+\begin{equation}
+ \pi_\theta^+(y)=\frac{r(x,y)\pi_\theta(y\mid x)}{\rho},
+ \qquad
+ \pi_\theta^-(y)=\frac{(1-r(x,y))\pi_\theta(y\mid x)}{1-\rho}.
+ \label{eq:rl-success-failure-distributions}
+\end{equation}
+Use $0\log0=0$ and write
+$h_{\mathrm b}(\rho)=-\rho\log\rho-(1-\rho)\log(1-\rho)$.
+
+\begin{proof}
+The mixture $\pi_\theta=\rho\pi_\theta^++(1-\rho)\pi_\theta^-$
+has disjoint component supports, so expanding entropy gives
+\begin{equation}
+ H(\pi_\theta)=h_{\mathrm b}(\rho)
+    +\rho H(\pi_\theta^+)+(1-\rho)H(\pi_\theta^-).
+ \label{eq:rl-entropy-decomposition}
+\end{equation}
+Consequently, under $H(\pi_\theta^-)\ge H(\pi_\theta^+)$,
+\begin{equation}
+ H(\pi_\theta)-H(\pi_\theta^+)
+ =h_{\mathrm b}(\rho)+(1-\rho)
+    \bigl[H(\pi_\theta^-)-H(\pi_\theta^+)\bigr]
+ \ge h_{\mathrm b}(\rho)>0.
+ \label{eq:rl-target-entropy-gap}
+\end{equation}
+\end{proof}

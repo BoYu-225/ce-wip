@@ -1,0 +1,244 @@
+\section{Proof of the Success-Conditioned KL Identity and Its MaxRL Connection}
+\label{app:conditional-kl-maxrl}
+
+For Lemma~\ref{lem:conditional-kl-maxrl}, let $\mathcal D$ be the fixed
+empirical prompt distribution. For each $x$, assume a fixed finite
+response space $\mathcal Y_x$, a differentiable positive policy
+$\pi_\theta$ on an open parameter domain, and a parameter-independent
+binary reward. Write $\mathcal S_x^+=\{y:r(x,y)=1\}$ and assume
+$\rho_\theta(x)>0$.
+
+\begin{proof}
+On $\mathcal S_x^+$, $\pi_\theta^+(y\mid x)=\pi_\theta(y\mid x)/\rho_\theta(x)$;
+outside it, $\pi_\theta^+=0$. Thus
+\begin{equation}
+ D_{\mathrm{KL}}(\pi_\theta^+\Vert\pi_\theta)
+ =\sum_{y\in\mathcal S_x^+}\pi_\theta^+(y\mid x)
+       \log\frac1{\rho_\theta(x)}
+ =-\log\rho_\theta(x).
+ \label{eq:app-success-kl}
+\end{equation}
+Taking the negative expectation over $x$ proves
+\eqref{eq:conditional-kl-maxrl}. Differentiating the finite success sum gives
+\begin{equation}
+ \nabla_\theta\log\rho_\theta(x)
+ =\frac{\sum_y r(x,y)\nabla_\theta\pi_\theta(y\mid x)}{\rho_\theta(x)}
+ =\mathbb E_{y\sim\pi_\theta^+(\cdot\mid x)}
+       [\nabla_\theta\log\pi_\theta(y\mid x)],
+ \label{eq:app-success-score}
+\end{equation}
+so the corresponding objective gradient is
+\begin{equation}
+ \nabla_\theta\mathcal J_{\mathrm{MaxRL}}^{(\infty)}
+ =\mathbb E_{x\sim\mathcal D,y\sim\pi_\theta(\cdot\mid x)}
+ \left[\frac{r(x,y)}{\rho_\theta(x)}
+              \nabla_\theta\log\pi_\theta(y\mid x)\right].
+ \label{eq:maxrl-gradient}
+\end{equation}
+\end{proof}
+
+The reverse KL is infinite when $0<\rho_\theta(x)<1$ because
+$\pi_\theta^+$ excludes failures. At $\rho_\theta(x)=0$ the target is
+undefined; at $\rho_\theta(x)=1$, full support implies all responses
+succeed, so the KL and gradient vanish.
+
+\paragraph{Frozen target.}
+Fix $q_x=\pi_{\theta_0}^+(\cdot\mid x)$. Substituting
+$\pi_\theta=\rho_\theta\pi_\theta^+$ on its support yields
+\begin{equation}
+ D_{\mathrm{KL}}(q_x\Vert\pi_\theta)
+ =D_{\mathrm{KL}}(q_x\Vert\pi_\theta^+)-\log\rho_\theta(x).
+ \label{eq:app-success-frozen-decomposition}
+\end{equation}
+The first term on the right is minimized at $\theta_0$, with zero
+value and gradient. Hence
+\begin{equation}
+ \left.-\nabla_\theta\mathbb E_{x\sim\mathcal D}
+ D_{\mathrm{KL}}(q_x\Vert\pi_\theta)\right|_{\theta_0}
+ =\left.\nabla_\theta\mathcal J_{\mathrm{MaxRL}}^{(\infty)}
+ \right|_{\theta_0}.
+ \label{eq:app-success-frozen-gradient}
+\end{equation}
+Away from $\theta_0$, the frozen-target objective additionally penalizes
+changes in the success-conditioned distribution.
+
+\paragraph{Finite-order MaxRL.}
+Integrating the geometric series gives
+$\log\rho=-\sum_{k\ge1}(1-\rho)^k/k$ for $0<\rho\le1$.
+The order-$K$ objective of \citet{tajwar_maximum_2026} and its gradient are
+\begin{align}
+ \mathcal J_{\mathrm{MaxRL}}^{(K)}
+ &=-\mathbb E_{x\sim\mathcal D}
+       \left[\sum_{k=1}^{K}\frac{(1-\rho_\theta(x))^k}{k}\right],
+ \label{eq:app-maxrl-truncation}\\
+ \nabla_\theta\mathcal J_{\mathrm{MaxRL}}^{(K)}
+ &=\mathbb E_{x\sim\mathcal D}
+       \left[\frac{1-(1-\rho_\theta(x))^K}{\rho_\theta(x)}
+                         \nabla_\theta\rho_\theta(x)\right],
+ \label{eq:app-maxrl-truncated-gradient}
+\end{align}
+where the second equality sums $\sum_{k=1}^K(1-\rho)^{k-1}$.
+Here $(1-\rho)^K$ is the probability of $K$ independent failures.
+At $K=1$, the objective is $\mathcal J_{\mathrm{RL}}-1$; as
+$K\to\infty$, the objective and gradient recover
+\eqref{eq:conditional-kl-maxrl} and \eqref{eq:maxrl-gradient}.
+Finite prompt support and positive success probabilities justify these
+limits. Bounding $1/k\le1/(K+1)$ in the series tail gives
+\begin{equation}
+ 0\le\mathcal J_{\mathrm{MaxRL}}^{(K)}
+             -\mathcal J_{\mathrm{MaxRL}}^{(\infty)}
+ \le\mathbb E_{x\sim\mathcal D}
+       \left[\frac{(1-\rho_\theta(x))^{K+1}}
+                    {(K+1)\rho_\theta(x)}\right].
+ \label{eq:app-maxrl-truncation-error}
+\end{equation}
+In particular, $\log\rho=(\rho-1)+O((1-\rho)^2)$ near $\rho=1$;
+standard RL is a first-order approximation there, without a uniform
+accuracy guarantee for rare successes.
+
+\subsection{Extension to Nonbinary Rewards via Randomized Acceptance}
+\label{app:randomized-reward-extension}
+
+A bounded reward can first be rescaled to the interval $[0,1]$ and then
+interpreted as an acceptance probability: a response with normalized
+reward $0.8$ is accepted $80\%$ of the time. Binary rewards are the
+special case in which a response is always accepted or always rejected.
+This suggests replacing conditioning on success with conditioning on
+acceptance. The generalized MaxRL objective then minimizes the forward
+KL from the acceptance-conditioned distribution to the model's joint
+distribution of responses and acceptance outcomes. As we show below,
+the negative KL equals the logarithm of the acceptance probability,
+which is also the logarithm of expected normalized reward.
+
+\paragraph{Normalizing the reward.}
+Retain the finite response spaces and positive policies assumed above,
+but let the fixed
+reward satisfy $a\le r(x,y)\le b$ for constants $a<b$ independent of
+$x$, $y$, and $\theta$. Define
+$s(x,y)=(r(x,y)-a)/(b-a)\in[0,1]$. This affine normalization preserves
+the standard expected-reward objective up to a positive scale and an
+additive constant. For an already normalized reward, take $a=0$, $b=1$.
+
+\paragraph{An augmented success event.}
+After drawing $Y\sim\pi_\theta(\cdot\mid x)$, introduce
+$A\mid x,Y\sim\operatorname{Bernoulli}(s(x,Y))$. Thus a response is
+accepted with probability equal to its normalized reward. Write
+$K_s(1\mid x,y)=s(x,y)$ and $K_s(0\mid x,y)=1-s(x,y)$, and define
+\begin{equation}
+ P_\theta(y,A\mid x)=\pi_\theta(y\mid x)K_s(A\mid x,y),
+ \qquad
+ \rho_\theta^s(x)=P_\theta(A=1\mid x)
+ =\mathbb E_{\pi_\theta(\cdot\mid x)}[s(x,Y)].
+ \label{eq:app-randomized-joint}
+\end{equation}
+Assume $\rho_\theta^s(x)>0$ for each prompt. Conditioning the joint
+distribution on acceptance gives the policy-dependent target
+\begin{equation}
+ Q_\theta(y,A\mid x)
+ =P_\theta(y,A\mid x,A=1)
+ =\frac{\pi_\theta(y\mid x)s(x,y)}{\rho_\theta^s(x)}
+   \mathbf1\{A=1\}.
+ \label{eq:app-randomized-target}
+\end{equation}
+On the support of $Q_\theta$, the ratio $Q_\theta/P_\theta$ is the
+constant $1/\rho_\theta^s(x)$. Consequently,
+\begin{equation}
+ -\mathbb E_{x\sim\mathcal D}
+ D_{\mathrm{KL}}\bigl(Q_\theta(\cdot,\cdot\mid x)
+                 \Vert P_\theta(\cdot,\cdot\mid x)\bigr)
+ =\mathbb E_{x\sim\mathcal D}
+   \left[\log\mathbb E_{\pi_\theta(\cdot\mid x)}[s(x,Y)]\right].
+ \label{eq:app-randomized-kl}
+\end{equation}
+This is an exact conditional-KL identity for multivalued or continuous-valued
+bounded rewards. The auxiliary variable is a probabilistic construction;
+it need not be sampled to evaluate the expected objective.
+
+\paragraph{Why the joint space matters.}
+The response marginal of $Q_\theta$ is the reward-weighted distribution
+$q_\theta^s(y\mid x)=\pi_\theta(y\mid x)s(x,y)/\rho_\theta^s(x)$.
+The KL chain rule gives, with $x$ suppressed,
+\begin{equation}
+ D_{\mathrm{KL}}(Q_\theta\Vert P_\theta)
+ =D_{\mathrm{KL}}(q_\theta^s\Vert\pi_\theta)
+  +\mathbb E_{q_\theta^s}[-\log s(x,Y)].
+ \label{eq:app-randomized-marginal-kl}
+\end{equation}
+The expectation is taken only over responses with $s(x,y)>0$.
+Its value generally depends on $\theta$, so replacing the joint KL by
+the response-marginal KL alone would not preserve the identity.
+For $r\in\{0,1\}$ with $s=r$, acceptance is deterministic given the
+response, $q_\theta^s=\pi_\theta^+$, and this extra term vanishes.
+The identity in~\eqref{eq:app-randomized-kl} then reduces exactly to
+\eqref{eq:conditional-kl-maxrl}.
+
+\paragraph{Scope of the extension.}
+The resulting objective is the prompt-averaged logarithm of expected
+normalized reward, extending the form of the binary MaxRL limit.
+It is generally different from standard RL, which averages expected
+reward itself. As in the binary case,
+$\log\rho=(\rho-1)+O((1-\rho)^2)$ near $\rho=1$, so the first-order
+truncation recovers standard RL on $s$ up to an additive constant.
+
+Table~\ref{tab:distribution-matching-nonbinary} continues
+Table~\ref{tab:distribution-matching} with these two objectives on the
+augmented space. The RL row uses normalized reward $s$, which is
+equivalent to using the original reward $r$ up to a positive scale and
+an additive constant.
+
+\begin{table}[!htbp]
+\centering
+\caption[Distribution matching for bounded nonbinary rewards]{Continuation
+of Table~\ref{tab:distribution-matching}: bounded nonbinary rewards.
+Objectives are averaged over prompts $x\sim\mathcal D$. The model distribution is $P_\theta$; the target
+$Q_\theta$ conditions it on acceptance and has $Q_\theta(y,0\mid x)=0$.
+$^{\dagger}$\,RL is its first-order approximation.}
+\label{tab:distribution-matching-nonbinary}
+\vspace{5pt}
+\begingroup
+\small
+\definecolor{frameworkink}{RGB}{38,57,76}
+\definecolor{frameworktint}{RGB}{241,245,249}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.45}
+\begin{tabularx}{\linewidth}{
+ >{\raggedright\arraybackslash}p{0.13\linewidth}
+ >{\centering\arraybackslash}X
+ >{\centering\arraybackslash}p{0.235\linewidth}
+ >{\raggedright\arraybackslash}p{0.16\linewidth}}
+\specialrule{\heavyrulewidth}{0pt}{0pt}
+\rowcolor{frameworktint}
+\textcolor{frameworkink}{\textbf{Algorithm}} &
+\textcolor{frameworkink}{\textbf{Objective function}} &
+\textcolor{frameworkink}{\textbf{Target distribution}} &
+\textcolor{frameworkink}{\textbf{Divergence}} \\
+\specialrule{\lightrulewidth}{0pt}{\belowrulesep}
+RL &
+$\mathbb E_{\pi_\theta}[s(x,Y)]=\rho_\theta^s(x)$ &
+$\begin{gathered}
+ Q_\theta(y,1\mid x)\\
+ =\dfrac{s(x,y)\pi_\theta(y\mid x)}{\rho_\theta^s(x)}
+\end{gathered}$ &
+Forward KL$^{\dagger}$ \\
+\addlinespace[4pt]
+MaxRL (extended) &
+$\begin{gathered}
+ \log\mathbb E_{\pi_\theta}[s(x,Y)]\\
+ =-D_{\mathrm{KL}}(Q_\theta\Vert P_\theta)
+\end{gathered}$ &
+$\begin{gathered}
+ Q_\theta(y,1\mid x)\\
+ =\dfrac{s(x,y)\pi_\theta(y\mid x)}{\rho_\theta^s(x)}
+\end{gathered}$ &
+Forward KL \\
+\bottomrule
+\end{tabularx}
+\endgroup
+\end{table}
+\FloatBarrier
+
+The logarithmic objective also depends on the chosen normalization,
+in particular the reward offset $a$. This construction extends the
+distribution-matching interpretation; it does not by itself extend
+the entropy or target-drift results for binary rewards. Those remain
+the focus of the main analysis.
