@@ -4,7 +4,7 @@
 
 We derive exact expected logit updates and first-order conditional drifts
 for REINFORCE, logit-shift, and normed-ls under the frozen-feature readout
-model of \citet[Appendix~E]{ren2025learningdynamics}. Expectations condition
+model of \citet[Appendix~E]{ren_learning_2025}. Expectations condition
 on the current policy and prefix throughout.
 
 \subsection{Setup and a common update identity}
@@ -98,7 +98,7 @@ holds exactly.
 \subsection{REINFORCE}
 \label{app:dynamics-reinforce}
 
-The single-token REINFORCE surrogate \citep{williams1992reinforce} is
+The single-token REINFORCE surrogate \citep{williams_simple_1992} is
 \begin{equation}
  \ell_{\mathrm{RF}}(W;Y,\widehat A)
  =-\operatorname{sg}[\widehat A]\log\pi_W(Y\mid s).
@@ -356,6 +356,6 @@ $\mathbb E[\Delta q]=O(\varepsilon^2)$ does not imply $\mathbb E[q^+]=q$.
 
 The results concern one prefix, a frozen-feature readout, and plain SGD.
 Joint-prefix updates introduce feature inner products; full-network updates
-introduce the logit Jacobian kernel \citep{ren2025learningdynamics}.
+introduce the logit Jacobian kernel \citep{ren_learning_2025}.
 These interactions, adaptive preconditioning, and policy-ratio clipping
 change the update map and are outside the cancellation guarantee.
