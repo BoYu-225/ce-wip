@@ -99,6 +99,10 @@ accuracy guarantee for rare successes.
 \subsection{Extension to Nonbinary Rewards via Randomized Acceptance}
 \label{app:randomized-reward-extension}
 
+\begin{insight}
+  The distribution matching form of RL and MaxRL are generalized to bounded nonbinary reward by rescaling the reward into $[0, 1]$ and interpreting rescaled reward as acceptance probability. Then RL and MaxRL are optimizing the divergence between the model and its acceptance-conditional distribution.
+\end{insight}
+
 A bounded reward can first be rescaled to the interval $[0,1]$ and then
 interpreted as an acceptance probability: a response with normalized
 reward $0.8$ is accepted $80\%$ of the time. Binary rewards are the
@@ -197,8 +201,6 @@ $^{\dagger}$\,RL is its first-order approximation.}
 \vspace{5pt}
 \begingroup
 \small
-\definecolor{frameworkink}{RGB}{38,57,76}
-\definecolor{frameworktint}{RGB}{241,245,249}
 \setlength{\tabcolsep}{5pt}
 \renewcommand{\arraystretch}{1.45}
 \begin{tabularx}{\linewidth}{
@@ -212,14 +214,14 @@ $^{\dagger}$\,RL is its first-order approximation.}
 \textcolor{frameworkink}{\textbf{Objective function}} &
 \textcolor{frameworkink}{\textbf{Target distribution}} &
 \textcolor{frameworkink}{\textbf{Divergence}} \\
-\specialrule{\lightrulewidth}{0pt}{\belowrulesep}
+\algorithmgroup{Iterative algorithms}
 RL &
 $\mathbb E_{\pi_\theta}[s(x,Y)]=\rho_\theta^s(x)$ &
 $\begin{gathered}
  Q_\theta(y,1\mid x)\\
- =\dfrac{s(x,y)\pi_\theta(y\mid x)}{\rho_\theta^s(x)}
+ =\dfrac{s(x,y)\targetpolicy(y\mid x)}{\rho_\theta^s(x)}
 \end{gathered}$ &
-Forward KL$^{\dagger}$ \\
+\forwardKL$^{\dagger}$ \\
 \addlinespace[4pt]
 MaxRL (extended) &
 $\begin{gathered}
@@ -228,9 +230,9 @@ $\begin{gathered}
 \end{gathered}$ &
 $\begin{gathered}
  Q_\theta(y,1\mid x)\\
- =\dfrac{s(x,y)\pi_\theta(y\mid x)}{\rho_\theta^s(x)}
+ =\dfrac{s(x,y)\targetpolicy(y\mid x)}{\rho_\theta^s(x)}
 \end{gathered}$ &
-Forward KL \\
+\forwardKL \\
 \bottomrule
 \end{tabularx}
 \endgroup
@@ -242,3 +244,7 @@ in particular the reward offset $a$. This construction extends the
 distribution-matching interpretation; it does not by itself extend
 the entropy or target-drift results for binary rewards. Those remain
 the focus of the main analysis.
+
+\begin{takeaway}
+  This generalization also provides new insights into RL with multiple reward. The reward value actually represents the potential acceptance probability, though we may not be aware of that in practice.
+\end{takeaway}

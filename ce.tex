@@ -13,6 +13,22 @@
 \usepackage[table]{xcolor}
 \usepackage[most]{tcolorbox}
 \newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{theorem}[section]
+
+% Shared styling for the distribution-matching tables.
+\definecolor{frameworkink}{RGB}{38,57,76}
+\definecolor{frameworktint}{RGB}{241,245,249}
+\definecolor{frameworkforward}{HTML}{0072B2}
+\definecolor{frameworkreverse}{HTML}{B45309}
+\definecolor{frameworkpolicy}{HTML}{8E4585}
+\newcommand{\forwardKL}{\textcolor{frameworkforward}{Forward KL}}
+\newcommand{\reverseKL}{\textcolor{frameworkreverse}{Reverse KL}}
+\newcommand{\targetpolicy}{\textcolor{frameworkpolicy}{\pi_\theta}}
+\newcommand{\algorithmgroup}[1]{%
+  % Add space outside the rules while keeping the heading row height fixed.
+  \specialrule{\lightrulewidth}{2pt}{0pt}%
+  \multicolumn{4}{l}{\textcolor{frameworkink}{\textbf{#1}}}\\%
+  \specialrule{\lightrulewidth}{0pt}{2pt}}
 
 % Reusable summary box: \begin{takeaway} ... \end{takeaway}.
 \definecolor{takeawayaccent}{HTML}{3D647A}
@@ -31,6 +47,25 @@
   fontupper=\normalfont\small,
   halign=left,
   before upper={\textcolor{takeawayaccent}{\bfseries Takeaway.}\enspace},
+}
+
+% Reusable main-idea box: \begin{insight} ... \end{insight}.
+\definecolor{insightaccent}{HTML}{B45309}
+\definecolor{insightbackground}{HTML}{FFF5E8}
+\newtcolorbox{insight}{
+  enhanced,
+  colback=insightbackground,
+  coltext=black,
+  frame hidden,
+  borderline west={1.5pt}{0pt}{insightaccent},
+  sharp corners,
+  boxrule=0pt,
+  boxsep=0pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  before skip=10pt, after skip=10pt,
+  fontupper=\normalfont\small,
+  halign=left,
+  before upper={\textcolor{insightaccent}{\bfseries Insight.}\enspace},
 }
 
 

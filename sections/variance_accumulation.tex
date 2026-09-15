@@ -1,6 +1,10 @@
 \section{Variance Accumulation in Iterative Algorithms}\label{sec:variance-accumulation}
 
-Distillation algorithms have a fixed target distribution for the student to fit. Although we have showed in \hyperref[lem:reward-reweighting]{Lemma~\ref*{lem:reward-reweighting}}, the ideal single-step update of RL or MaxRL with binary reward will not affect the target distribution, this property may not hold in real applications. One important reason is that, there are non-negligible random noise in the one optimization step. This could be caused by the empirical estimator of the objective, the approximation of the optimizer and the numerical precision of the model parameter.
+\begin{insight}
+  In iterative algorithms, the target distribution helps separate intended gains from unintended side effects. For example, RL aims to maximize expected reward. With binary rewards, conditioning on $r(x,y)=1$ yields the training target $\pi_\theta^+$, which remains unchanged under the ideal update in \hyperref[lem:reward-reweighting]{Theorem~\ref*{lem:reward-reweighting}}. Tracking how this target changes during training can therefore reveal side effects beyond the intended reward improvement.
+\end{insight}
+
+Distillation algorithms have a fixed target distribution for the student to fit. Although we have showed in \hyperref[lem:reward-reweighting]{Theorem~\ref*{lem:reward-reweighting}}, the ideal single-step update of RL or MaxRL with binary reward will not affect the target distribution, this property may not hold in real applications. One important reason is that, there are non-negligible random noise in the one optimization step. This could be caused by the empirical estimator of the objective, the approximation of the optimizer and the numerical precision of the model parameter.
 
 In this section we study \emph{variance accumulation} in iterative training and its relation to the observed entropy dynamics, starting from the gradient noise in self-distillation.
 
