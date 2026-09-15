@@ -1,0 +1,31 @@
+\section{Supplimentary Experiments on Standard and Reversed Iterative Self-Distillation}
+
+Here are some supplimentary experiments on two iterative self-distillation methods mentioned in the main body, See Figure~\ref{fig:supp-exp-isd}.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=\linewidth]{media/entropy_comparison_ISD.pdf}
+\caption{Additional experiments on entropy dynamics of iterative self-distillation and reversed iterative self-distillation. In the legend ``N'' denotes the number of samples per request, ``B'' denotes batchsize and ``lr'' denotes the learning rate of SGD optimizer.}
+\label{fig:supp-exp-isd}
+\end{figure}
+
+\begin{takeaway}
+In a single training step, model entropy may randomly increase or decrease, but over the long run it exhibits a deterministic downward trend in expectation.
+\end{takeaway}
+
+These entropy curves satisfies the derivation in the main body very well. In fact the decreasing expected entropy does not guarantee the probability of decrement and increment. For example in reversed iterative self-distillation, since the punishment on samples with a high probability will raise the entropy, the entropy policy model has a high probability to be increased. However, the negative expectation indicates that once the decrement happens, the magnitude of the decrease will be substantial. This was also observed in our experiments.
+
+These experiments share this experimental setting:
+
+\begin{itemize}
+\item seed: 1
+\item total\_train\_epochs: 2
+\item actor.path: Qwen/Qwen3-1.7B-Base
+\item dataset: openai/gsm8k
+\item actor.dtype: bfloat16
+\item actor.kl\_ctl: 0
+\item actor.optimizer.type: sgd
+\item actor.optimizer.momentum: 0
+\end{itemize}
+
+Other hyperparameters are kept the same as the default value of AReaL, which can be found in our codebase.

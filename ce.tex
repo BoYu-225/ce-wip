@@ -7,10 +7,31 @@
 
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{graphicx}
 \usepackage{amsthm,needspace}
 \usepackage{booktabs,tabularx,placeins}
 \usepackage[table]{xcolor}
+\usepackage[most]{tcolorbox}
 \newtheorem{lemma}{Lemma}[section]
+
+% Reusable summary box: \begin{takeaway} ... \end{takeaway}.
+\definecolor{takeawayaccent}{HTML}{3D647A}
+\definecolor{takeawaybackground}{HTML}{F1F5F8}
+\newtcolorbox{takeaway}{
+  enhanced,
+  colback=takeawaybackground,
+  coltext=black,
+  frame hidden,
+  borderline west={1.5pt}{0pt}{takeawayaccent},
+  sharp corners,
+  boxrule=0pt,
+  boxsep=0pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  before skip=10pt, after skip=10pt,
+  fontupper=\normalfont\small,
+  halign=left,
+  before upper={\textcolor{takeawayaccent}{\bfseries Takeaway.}\enspace},
+}
 
 
 \title{A Distribution-Matching Perspective on LLM Training Algorithms}
@@ -89,6 +110,8 @@ These results provide a theoretical explanation, at least in part, for the long-
 \input{appendices/variance_accumulation}
 \input{appendices/rl_target_entropy}
 \input{appendices/token_learning_dynamics}
+
+\input{appendices/supplimentary_exps_ISD}
 
 
 \end{document}
