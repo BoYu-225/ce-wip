@@ -1,0 +1,23 @@
+# Build outputs (build.sh compiles into build/ and publishes to output/)
+build/
+output/
+
+# PDF from compiling the ICLR style file's demo (iclr2026_conference.tex) in the repo root
+iclr2026_conference.pdf
+
+# General LaTeX cruft
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.nav
+*.snm
+*.vrb
+*.synctex.gz
+
+# Scratch space used while revising (files already tracked under tmp/ stay tracked)
+tmp/

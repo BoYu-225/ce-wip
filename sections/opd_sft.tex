@@ -54,8 +54,8 @@ consequence of large KL divergence or a guarantee of training instability.
 
 \subsection{Empirical Validation}
 
-In the preceding derivation, we demonstrated that the OPD algorithm is more performant than KD in the proximal regime, whereas the opposite holds in the distal regime. We then conducted a series of experiments to further validate these results.
+The preceding analysis establishes a local gradient-estimation advantage for OPD and a conditional variance comparison in the distal regime. We conduct a series of experiments to examine how these distinctions relate to distillation behavior.
 
-% TODO experimental results
+Experimental settings, training curves, and checkpoint evaluations are provided in Appendix~\ref{app:distillation-experiments}.
 
 There are also many other works studying the stability issue and improvements of OPD~\citep{li_rethinking_2026, oh_kl_2026}, while a most simple yet effective method could be a two-stage distillation, which uses KD as coldstart, and use OPD to further improve their performance~\citep{yang_qwen3_2025}. We believe our work could provide more theoretical insights on the distillation algorithms.

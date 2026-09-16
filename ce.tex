@@ -1,5 +1,8 @@
 
 \documentclass{article} % For LaTeX2e
+% eso-pic (loaded by iclr2026_conference.sty) pulls in xcolor first; pass the
+% `table` option ahead so the [table] load below does not trigger an option clash.
+\PassOptionsToPackage{table}{xcolor}
 \usepackage{iclr2026_conference,times}
 
 % Optional math commands from https://github.com/goodfeli/dlbook_notation.
@@ -107,6 +110,7 @@ These results provide a theoretical explanation, at least in part, for the long-
 \input{appendices/conditional_kl_maxrl}
 \input{appendices/proximal_gradient_noise}
 \input{appendices/distal_gradient_variance}
+\input{appendices/self-distillation}
 \input{appendices/variance_accumulation}
 \input{appendices/rl_target_entropy}
 \input{appendices/token_learning_dynamics}
