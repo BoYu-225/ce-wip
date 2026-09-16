@@ -2,6 +2,10 @@
 \label{app:token-learning-dynamics}
 \numberwithin{equation}{section}
 
+\begin{insight}
+  The model from \citet{ren_learning_2025} assumes the last layer has the highest impact on the behavior of single step of training. So we freeze all deeper layers and analyze the learning dynamics of the last linear layer.
+\end{insight}
+
 We derive exact expected logit updates and first-order conditional drifts
 for REINFORCE, logit-shift, and normed-ls under the frozen-feature readout
 model of \citet[Appendix~E]{ren_learning_2025}. Expectations condition
@@ -146,6 +150,10 @@ flow; finite-step expected entropy need not be monotone.
 \subsection{Logit-shift}
 \label{app:dynamics-logit-shift}
 
+\begin{insight}
+  There is a deterministic distribution drift in REINFORCE caused the geometry property of the softmax layer in the model. All logits received an additional multiplier $p_i$ compared to ideal update in Theorem~\ref{lem:reward-reweighting}. This naturally suggests introducing an inverse-probability weighting to correct this bias. Though by deduction this cannot completely resolve this issue.
+\end{insight}
+
 For any bounded, detached sampled signal $\widehat B$, define the logit-shift
 surrogate by inverse-probability weighting:
 \begin{equation}
@@ -199,6 +207,10 @@ and success mass $P$, $T_A=K-VP$. For $\widehat B\equiv1$,
 
 \subsection{Normed-ls and cancellation of the within-subset drift}
 \label{app:dynamics-normed-ls}
+
+\begin{insight}
+  Both REINFORCE objective and logit-shift with inverse-probability reweighting can not correct the geometry bias, while we find that a combination of them could cancel the probability-related term and provide a better approximation of the ideal update direction. This is called normed-ls algorithm.
+\end{insight}
 
 Let $\lambda\ge0$ be fixed during the update. We define normed-ls by
 the sampled surrogate

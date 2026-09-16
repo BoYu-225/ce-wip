@@ -1,6 +1,11 @@
 \section{Martingales and Entropy in Self-Distillation}
 \label{app:variance-accumulation}
 
+\begin{insight}
+Sampling from the current policy makes the score update have conditional
+mean zero, so the parameters form a martingale despite nonzero sampling noise.
+\end{insight}
+
 For Lemmas~\ref{lem:self-distillation-martingale}--\ref{lem:self-distillation-entropy}, fix a prompt $x$ and a
 finite response space $\mathcal Y_x$. Assume a positive, twice continuously
 differentiable policy, integrable iterates and increments, and
@@ -51,7 +56,14 @@ where $\mu_k$ is $\mathcal F_k$-measurable. The case $\mu_k=0$
 is concavity along the update segments; $\mu_k>0$ gives strict decrease
 whenever the update variance is nonzero.
 
-\begin{proof}[Proof of Lemma~\ref{lem:self-distillation-entropy}]
+\begin{insight}
+Mean-zero parameter noise can lower expected entropy when entropy is
+concave along the possible update segments.
+In the Taylor expansion, the linear term vanishes in conditional expectation,
+leaving a nonpositive curvature term whose magnitude is bounded using the Fisher covariance.
+\end{insight}
+
+\begin{proof}[Proof of Theorem~\ref{lem:self-distillation-entropy}]
 Taylor's formula with \eqref{eq:self-distillation-entropy-curvature},
 $\mathbb E[d_k\mid\mathcal F_k]=0$, and
 \eqref{eq:self-distillation-sgd-covariance} yields

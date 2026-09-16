@@ -48,16 +48,15 @@ cross-entropies with ground-truth prefixes.
 In many applications the response could come from a teacher model $pi_t$, instead of the dataset. Then the training objective of SFT would become minimizing the forward KL divergence between the teacher model and the student model. This yields the classical Knowledge-Distillation (KD) algorithm:
 
 \begin{align}
-  \mathcal{J}_{\mathrm{KD}} &= -\mathbb{E}_{x\sim\mathcal{D}} [D_{\mathrm{KL}}\bigl(\pi_t (\cdot\mid x)\Vert \pi_\theta (\cdot\mid x)\bigr)]\\
-  &= \mathbb{E}_{x\sim\mathcal{D}, y\sim\pi_t (\cdot\mid x)} [\log \pi_\theta (y\mid x)] - H(\pi_t).
+  \mathcal{J}_{\mathrm{KD}} &= -\mathbb{E}_{x\sim\mathcal{D}} [D_{\mathrm{KL}}\bigl(\pi_t (\cdot\mid x)\Vert \pi_\theta (\cdot\mid x)\bigr)] = \mathbb{E}_{x\sim\mathcal{D}, y\sim\pi_t (\cdot\mid x)} [\log \pi_\theta (y\mid x)] - H(\pi_t).
   \label{eq:kl-loss}
 \end{align}
 
-On Policy Distillation (OPD) recently emerged as a new algorithm for distillation tasks~\citep{thinking_machines_lab_-policy_2025}. It can exhibit superior performance than KD, and received great attention from the industry~\citep{team_kimi_2026, deepseek-ai_deepseek-v4_2026, glm-5-team_glm-5_2026}. While in some cases this algorithm may also be unstable and failed to complete the distillation task~\citep{li_rethinking_2026}. The key difference between OPD and KD is that, OPD uses sequence-level reverse KL divergence as the training objective:
+OPD recently emerged as a new algorithm for distillation tasks~\citep{thinking_machines_lab_-policy_2025}. It can exhibit superior performance than KD, and received great attention from the industry~\citep{team_kimi_2026, deepseek-ai_deepseek-v4_2026, glm-5-team_glm-5_2026}. While in some cases this algorithm may also be unstable and failed to complete the distillation task~\citep{li_rethinking_2026}. The key difference between OPD and KD is that, OPD uses sequence-level reverse KL divergence as the training objective:
 
 \begin{align}
-  \mathcal{J}_{\mathrm{OPD}} &= -\mathbb{E}_{x\sim\mathcal{D}} [D_{\mathrm{KL}}\bigl(\pi_\theta (\cdot\mid x)\Vert \pi_t (\cdot\mid x)\bigr)]\\
-  &= \mathbb{E}_{x\sim\mathcal{D}, y\sim\pi_\theta (\cdot\mid x)} [\log \pi_t (y\mid x) - \log \pi_\theta (y\mid x)].
+  \mathcal{J}_{\mathrm{OPD}} &= -\mathbb{E}_{x\sim\mathcal{D}} [D_{\mathrm{KL}}\bigl(\pi_\theta (\cdot\mid x)\Vert \pi_t (\cdot\mid x)\bigr)]
+  = \mathbb{E}_{x\sim\mathcal{D}, y\sim\pi_\theta (\cdot\mid x)} [\log \frac{\pi_t (y\mid x)}{\pi_\theta (y\mid x)}].
   \label{eq:opd-loss}
 \end{align}
 
@@ -65,19 +64,19 @@ The on policy nature of OPD directly come from the requirement of reverse KL div
 
 \subsection{Reinforce Learning Algorithms}
 
-All the algorithms methoned above has a clear definition of the target distribution, and the objective is directly minimizing a specific type of divergence between the model and the target distribution. As another central component of post-training, however, Reinforcement Learning (RL) is not defined by such divergence. The objective of RL is to maximize the expected reward $r$ given to each possible action of the policy model, while for LLMs this action is typically a sequence generation. Its standard objective and gradient are~\citep{williams_simple_1992}:
+All the algorithms methoned above has a clear definition of the target distribution. However, as another central component of post-training, Reinforcement Learning (RL) is not defined by such divergence. The objective of RL is to maximize the expected reward $r$ given to each possible action of the policy model, while for LLMs this action is typically a sequence generation. Its standard objective and gradient are~\citep{williams_simple_1992}:
 
 \begin{equation}
   \mathcal{J}_{\mathrm{RL}} = \mathbb{E}_{x\sim\mathcal{D}, y\sim\pi_\theta (\cdot\mid x)} [r(x, y)],\qquad \nabla_\theta \mathcal{J}_{\mathrm{RL}} = \mathbb{E}_{x\sim\mathcal{D}, y\sim\pi_\theta (\cdot\mid x)} [r(x, y) \nabla_\theta \log \pi_\theta].
   \label{eq:std-rfalgo}
 \end{equation}
 
-In this work we will show that RL algorithms can also be expressed in the form of distribution matching objective under 0-1 reward, and the analysis on the target distribution can further reveal some interesting properties of these algorithms.
+% In this work we will show that RL algorithms can also be expressed in the form of distribution matching objective under 0-1 reward, and the analysis on the target distribution can further reveal some interesting properties of these algorithms.
 
-We first characterize an ideal policy update that improves expected reward
-while remaining close to the current policy under a forward-KL restriction. (The same result also holds for reverse-KL restriction)
+In fact, this objective also implicitly introduces a target distribution. We first characterize an ideal policy update that improves expected reward
+while remaining close to the current policy under a forward-KL restriction. (Similar result also holds for reverse-KL restriction)
 
-\begin{lemma}[Reward reweighting under a forward-KL restriction]
+\begin{theorem}[Reward reweighting under a forward-KL restriction]
 \label{lem:reward-reweighting}
 For a prompt $x$, the ideal update maximizing
 $\mathbb E_{y\sim q}[r(x,y)]-\beta D_{\mathrm{KL}}(\pi_\theta\Vert q)$
@@ -90,7 +89,7 @@ over response distributions $q$, with KL penalty $\beta>0$, is
 where $\lambda_x$ normalizes the distribution. Responses with the same
 reward receive the same probability multiplier, preserving their
 conditional distribution.
-\end{lemma}
+\end{theorem}
 \noindent\hyperref[app:reward-reweighting]{Proof: Appendix~\ref*{app:reward-reweighting}.}
 
 Under binary rewards, we can verify that this update preserves the success-conditioned distribution
@@ -99,7 +98,7 @@ $\pi_\theta^+(\cdot\mid x)
 this conditional distribution with the forward KL gives the following identity.
 
 \Needspace{9\baselineskip}
-\begin{lemma}[Success-conditioned KL and the MaxRL limit]
+\begin{theorem}[Success-conditioned KL and the MaxRL limit]
 \label{lem:conditional-kl-maxrl}
 Let $\rho_\theta(x)=\mathbb E_{y\sim\pi_\theta(\cdot\mid x)}[r(x,y)]$
 denote the success probability. Matching the success-conditioned target
@@ -112,31 +111,28 @@ $\pi_\theta^+$ by minimizing its forward KL to the current policy yields
  =\mathcal J_{\mathrm{MaxRL}}^{(\infty)}(\theta).
  \label{eq:conditional-kl-maxrl}
 \end{equation}
-\end{lemma}
+\end{theorem}
 \noindent\hyperref[app:conditional-kl-maxrl]{Proof: Appendix~\ref*{app:conditional-kl-maxrl}.}
 
 This actually gives the limit objective function of MaxRL algorithm, which is previously derived from the maximum likelihood estimator of the predictive accuracy~\citep{tajwar_maximum_2026}. It is believed to have some superior performance on maintaining the diversity of the distribution, and the standard RL objective is the first-order approximation of MaxRL.
 
 An auxiliary binary acceptance variable extends the conditional-KL identity to bounded nonbinary rewards on an augmented response space; Appendix~\ref{app:randomized-reward-extension} outlines this construction, while our main RL analysis remains focused on binary rewards.
 
-Table~\ref{tab:distribution-matching} summarizes these algorithms through
-their objectives and target distributions.
-
 \begin{table}[!htbp]
 \centering
-\caption[Training algorithms viewed as distribution matching]{Training algorithms viewed as distribution matching. parameter-independent constants
+\caption[Training algorithms viewed as distribution matching]{Training algorithms viewed as distribution matching. Parameter-independent constants
 are omitted. Conditional objectives are averaged over prompts
-$x\sim\mathcal D$. Forward KL places the target in the first argument;
-reverse KL places it in the second. RL and MaxRL use binary rewards and
+$x\sim\mathcal D$. \forwardKL{} places the target in the first argument;
+\reverseKL{} places it in the second. RL and MaxRL use binary rewards and
 $\rho_\theta(x)>0$, with the policy-dependent target $\pi_\theta^+$.
-The MaxRL entry gives the exact limiting objective.
+Algorithms are iterative if their target distribution depends on the current
+model, and noniterative otherwise; \textcolor{frameworkpolicy}{$\pi_\theta$}
+is highlighted in iterative targets.
 $^{\dagger}$\,RL is its first-order approximation.}
 \label{tab:distribution-matching}
 \vspace{5pt}
 \begingroup
 \small
-\definecolor{frameworkink}{RGB}{38,57,76}
-\definecolor{frameworktint}{RGB}{241,245,249}
 \setlength{\tabcolsep}{5pt}
 \renewcommand{\arraystretch}{1.45}
 \begin{tabularx}{\linewidth}{
@@ -150,34 +146,37 @@ $^{\dagger}$\,RL is its first-order approximation.}
 \textcolor{frameworkink}{\textbf{Objective function}} &
 \textcolor{frameworkink}{\textbf{Target distribution}} &
 \textcolor{frameworkink}{\textbf{Divergence}} \\
-\specialrule{\lightrulewidth}{0pt}{\belowrulesep}
+\algorithmgroup{Noniterative algorithms}
 Pre-training &
 $\mathbb E_{x\sim p_{\mathcal D}}[\log\pi_\theta(x)]$ &
-$p_{\mathcal D}(x)$ & Forward KL \\
+$p_{\mathcal D}(x)$ & \forwardKL \\
 SFT &
 $\mathbb E_{y\sim p_{\mathcal D}(\cdot\mid x)}[\log\pi_\theta(y\mid x)]$ &
-$p_{\mathcal D}(y\mid x)$ & Forward KL \\
+$p_{\mathcal D}(y\mid x)$ & \forwardKL \\
 \addlinespace[3pt]
 KD &
 $\mathbb E_{y\sim\pi_t(\cdot\mid x)}[\log\pi_\theta(y\mid x)]$ &
-$\pi_t(y\mid x)$ & Forward KL \\
+$\pi_t(y\mid x)$ & \forwardKL \\
 OPD &
 $\displaystyle\mathbb E_{y\sim\pi_\theta(\cdot\mid x)}
  \!\left[\log\frac{\pi_t(y\mid x)}{\pi_\theta(y\mid x)}\right]$ &
-$\pi_t(y\mid x)$ & Reverse KL \\
-\addlinespace[4pt]
+$\pi_t(y\mid x)$ & \reverseKL \\
+\algorithmgroup{Iterative algorithms}
 RL &
 $\mathbb E_{y\sim\pi_\theta(\cdot\mid x)}[r(x,y)]$ &
-$\displaystyle\pi_\theta^+=\frac{r(x,y)\pi_\theta(y\mid x)}{\rho_\theta(x)}$ &
-Forward KL$^{\dagger}$ \\
+$\displaystyle\targetpolicy^+=\frac{r(x,y)\targetpolicy(y\mid x)}{\rho_\theta(x)}$ &
+\forwardKL$^{\dagger}$ \\
 MaxRL &
 $\log\mathbb E_{y\sim\pi_\theta(\cdot\mid x)}[r(x,y)]$ &
-$\displaystyle\pi_\theta^+=\frac{r(x,y)\pi_\theta(y\mid x)}{\rho_\theta(x)}$ &
-Forward KL \\
+$\displaystyle\targetpolicy^+=\frac{r(x,y)\targetpolicy(y\mid x)}{\rho_\theta(x)}$ &
+\forwardKL \\
 \bottomrule
 \end{tabularx}
 \endgroup
 \end{table}
 \FloatBarrier
 
-In the following sections we will primarily study the property of these algorithms under different conditions, with a focus on KD, OPD and RL with binary reward.
+Table~\ref{tab:distribution-matching} summarizes these algorithms through
+their objectives and target distributions.
+
+% In the following sections we will primarily study the property of these algorithms under different conditions, with a focus on KD, OPD and RL with binary reward.

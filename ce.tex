@@ -1,9 +1,9 @@
 
 \documentclass{article} % For LaTeX2e
-% eso-pic (loaded by iclr2026_conference.sty) pulls in xcolor first; pass the
-% `table` option ahead so the [table] load below does not trigger an option clash.
+
 \PassOptionsToPackage{table}{xcolor}
-\usepackage{iclr2026_conference,times}
+\usepackage{iclr2027_conference,times}
+
 
 % Optional math commands from https://github.com/goodfeli/dlbook_notation.
 \input{math_commands.tex}
@@ -16,6 +16,22 @@
 \usepackage[table]{xcolor}
 \usepackage[most]{tcolorbox}
 \newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{theorem}[section]
+
+% Shared styling for the distribution-matching tables.
+\definecolor{frameworkink}{RGB}{38,57,76}
+\definecolor{frameworktint}{RGB}{241,245,249}
+\definecolor{frameworkforward}{HTML}{0072B2}
+\definecolor{frameworkreverse}{HTML}{B45309}
+\definecolor{frameworkpolicy}{HTML}{8E4585}
+\newcommand{\forwardKL}{\textcolor{frameworkforward}{Forward KL}}
+\newcommand{\reverseKL}{\textcolor{frameworkreverse}{Reverse KL}}
+\newcommand{\targetpolicy}{\textcolor{frameworkpolicy}{\pi_\theta}}
+\newcommand{\algorithmgroup}[1]{%
+  % Add space outside the rules while keeping the heading row height fixed.
+  \specialrule{\lightrulewidth}{2pt}{0pt}%
+  \multicolumn{4}{l}{\textcolor{frameworkink}{\textbf{#1}}}\\%
+  \specialrule{\lightrulewidth}{0pt}{2pt}}
 
 % Reusable summary box: \begin{takeaway} ... \end{takeaway}.
 \definecolor{takeawayaccent}{HTML}{3D647A}
@@ -34,6 +50,25 @@
   fontupper=\normalfont\small,
   halign=left,
   before upper={\textcolor{takeawayaccent}{\bfseries Takeaway.}\enspace},
+}
+
+% Reusable main-idea box: \begin{insight} ... \end{insight}.
+\definecolor{insightaccent}{HTML}{B45309}
+\definecolor{insightbackground}{HTML}{FFF5E8}
+\newtcolorbox{insight}{
+  enhanced,
+  colback=insightbackground,
+  coltext=black,
+  frame hidden,
+  borderline west={1.5pt}{0pt}{insightaccent},
+  sharp corners,
+  boxrule=0pt,
+  boxsep=0pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  before skip=10pt, after skip=10pt,
+  fontupper=\normalfont\small,
+  halign=left,
+  before upper={\textcolor{insightaccent}{\bfseries Insight.}\enspace},
 }
 
 
@@ -83,7 +118,7 @@ Address \\
 \begin{abstract}
 In this work, we propose a unified framework for training algorithms across different stages of modern large language model development, based on the perspective of distribution matching. We show that a broad class of language model training algorithms can be interpreted as minimizing a certain divergence between the current model and a target distribution, and that characterizing the properties of this target distribution provides substantial insight into the behavior of the corresponding training algorithms.
 By analyzing specific forms of the target distribution, we establish that On-Policy Distillation (OPD) enjoys an advantage over classical Knowledge Distillation (KD) when the current model distribution is close to the target distribution, while exhibiting a disadvantage when the two distributions are far apart. Furthermore, when the target distribution itself depends on the model being optimized, we show that the accumulation estimation variance can induce a deterministic degradation of the target distribution.
-These results provide a theoretical explanation, at least in part, for the long-term behavior of existing reinforcement learning algorithms, and further study suggest several principled and reliable approaches for mitigating the associated degradation. We believe that this theoretical perspective can deepen the research community's understanding of language model training algorithms and provide useful guidance for future research.
+These results provide a theoretical explanation, at least in part, for the long-term behavior of existing Reinforcement Learning (RL) algorithms, and further study suggest several principled and reliable approaches for mitigating the associated degradation. We believe that this theoretical perspective can deepen the research community's understanding of language model training algorithms and provide useful guidance for future research.
 \end{abstract}
 
 \input{sections/introduction.tex}
@@ -101,7 +136,7 @@ These results provide a theoretical explanation, at least in part, for the long-
 \input{sections/conclusion.tex}
 
 \bibliography{ce}
-\bibliographystyle{iclr2026_conference}
+\bibliographystyle{iclr2027_conference}
 
 \clearpage
 \appendix
