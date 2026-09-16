@@ -1,6 +1,13 @@
 \section{Proof of the Success-Conditioned KL Identity and Its MaxRL Connection}
 \label{app:conditional-kl-maxrl}
 
+\begin{insight}
+Conditioning on success rescales every successful response by the same
+factor, so the KL reduces to the negative logarithm of the success probability.
+Differentiating this probability and using the score identity then gives
+the success-weighted MaxRL gradient.
+\end{insight}
+
 For Lemma~\ref{lem:conditional-kl-maxrl}, let $\mathcal D$ be the fixed
 empirical prompt distribution. For each $x$, assume a fixed finite
 response space $\mathcal Y_x$, a differentiable positive policy

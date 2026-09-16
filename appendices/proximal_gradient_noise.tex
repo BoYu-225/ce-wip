@@ -1,6 +1,11 @@
 \section{Proof of Gradient Noise at the Proximal Limit}
 \label{app:proximal-gradient-noise}
 
+\begin{insight}
+When student and teacher coincide, every OPD log-ratio weight is zero,
+whereas the sampled KD scores cancel only in expectation.
+\end{insight}
+
 For Lemma~\ref{lem:proximal-gradient-noise}, fix a prompt $x$, a finite
 response space $\mathcal Y_x$, and a positive teacher $\pi_t$ independent
 of $\theta$. Assume $\pi_\theta(y\mid x)>0$ is continuously differentiable

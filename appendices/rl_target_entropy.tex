@@ -1,6 +1,13 @@
 \section{Entropy of the Success-Conditioned RL Target}
 \label{app:rl-target-entropy}
 
+\begin{insight}
+Because success and failure have disjoint supports, total entropy splits
+into uncertainty about the outcome and average uncertainty within each outcome.
+Subtracting the success-conditioned entropy then gives a positive gap
+whenever the failure-conditioned entropy is at least as large.
+\end{insight}
+
 For Lemma~\ref{lem:rl-target-entropy}, fix a prompt $x$, a finite response
 space $\mathcal Y_x$, and a deterministic binary reward $r(x,y)$.
 Write $\rho=\rho_\theta(x)\in(0,1)$ and suppress the conditioning on $x$.

@@ -1,6 +1,14 @@
 \section{A Conditional Variance Comparison in the Distal Regime}
 \label{app:distal-gradient-variance}
 
+\begin{insight}
+Suppressing teacher probability on a set still sampled by the student
+introduces a growing $\log(1/\epsilon)$ term in the OPD weights.
+Separating this term from a bounded remainder reveals quadratic growth
+of OPD variance under the stated nonzero-score condition, while KD variance
+remains bounded by the fixed student scores.
+\end{insight}
+
 Fix a prompt $x$, a finite response space $\mathcal Y_x$, and a student
 parameter $\bar\theta$. Assume $\pi_\theta$ is positive and continuously
 differentiable near $\bar\theta$, and write
